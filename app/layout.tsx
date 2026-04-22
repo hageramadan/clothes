@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
+import { SubNavbar } from "@/components/layout/SubNavbar";
 
 const almarai = Almarai({
   subsets: ["arabic"],
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body className={almarai.className}>
         <CartProvider>
           <FavoritesProvider>
+            <SubNavbar/>
             <Navbar />
             <main className="min-h-screen">{children}</main>
             {/* <Footer /> */}

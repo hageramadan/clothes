@@ -1,163 +1,107 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FaFacebook, FaTwitter, FaInstagram } from "react-icons/fa";
+import { FaFacebook, FaTwitter, FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { MdEmail, MdPhone, MdLocationOn } from "react-icons/md";
+import { PiLineVerticalLight, PiLineVerticalThin } from "react-icons/pi";
 
 export function Footer() {
   return (
-    <footer className=" border-t mt-auto bg-[#112B40] text-white pt-5">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* About */}
-          <div>
-            <h3 className="text-[#23A6F0] text-[84px] font-bold mb-4">
-              Logo
-            </h3>
+    <footer className="border-t mt-auto bg-[#141718] text-white pt-6 md:pt-10">
+      <div className="container mx-auto px-4 py-8 md:py-12">
+        {/* القسم العلوي - الشبكة الرئيسية */}
+        <div className="flex flex-wrap md:flex-row flex-col items-center justify-center md:justify-between gap-8 mb-8">
+          
+          {/* القسم 1: الشعار والوصف */}
+          <div className="space-y-4">
+            <div className="flex  items-center gap-3">
+              <h1 className="text-[#FFFFFF] text-xl md:text-2xl font-bold">
+                LoGo
+              </h1>
+              <PiLineVerticalThin className="w-6 h-8 text-[#E8ECEF] text-[14px]" />
+              <p className="text-white/70 text-sm leading-relaxed">
+                متجرك المثالي هنا كل ما تريد
+              </p>
+            </div>
+          </div>
+          <div className="flex md:flex-row flex-col justify-center gap-7 items-center text-[14px]">
+            <Link href="/" aria-label="home" className="font-bold">الرئيسية</Link>
+            <Link href="/" aria-label="categories">الفئات</Link>
+            <Link href="/" aria-label="contact">تواصل معنا</Link>
+            <Link href="/" aria-label="contact">تواصل معنا</Link>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">الاقسام</h3>
-            <ul className="space-y-2 text-md">
-              <li>
-                <Link
-                  href="/"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  الجديد
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/categories"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  الخصومات
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  هواتف
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  لابتوب
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  اكسسوارات
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  سماعات
-                </Link>
-              </li>
-            </ul>
-          </div>
+        </div>
 
-          {/* Contact Info */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">المساعدة</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href="/"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  الشروط والاحكام
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/categories"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  سياسة الخصوصية
-                </Link>
-              </li>
-            </ul>
-          </div>
+        {/* القسم السفلي - الحقوق ووسائل التواصل */}
+        <div className="border-t border-white/20 pt-6 md:pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+         <div className="flex flex-wrap justify-center gap-7">
+             {/* حقوق الملكية */}
+            <p className="text-white/60 order-2 md:order-1 text-sm text-[16px] font-bold text-center md:text-right">
+              © جميع الحقوق محفوظة | ********** 2025
+            </p>
 
-          {/* Social Links */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">تواصل معنا</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-3">
-                <MdPhone className="h-5 w-5 text-primary" />
-                <div>
-                  <p>اتصل بنا</p>
-                  <span className="text-muted-foreground">0987654333</span>
-                </div>
-              </li>
-              <li className="flex items-center gap-3">
-                <MdEmail className="h-5 w-5 text-primary" />
-                <div>
-                  <p>البريد الإلكتروني</p>
-                  <span className="text-muted-foreground">
-                    ecommerce@gmail.com
-                  </span>
-                </div>
-              </li>
-            </ul>
-            <div className="flex gap-4 mt-5">
-              <Link href="#">
-                <Image
-                  src="/images/social/linkedin.png"
-                  alt="Facebook "
-                  className="w-[24px] h-[24px]"
-                  width={240}
-                  height={240}
-                />
+            {/* روابط الشروط والخصوصية */}
+            <div className="flex flex-col order-1 md:order-2 md:flex-row gap-6">
+              <Link 
+                href="/" 
+                className="text-white text-[14px] hover:text-[#FF7700] transition-colors duration-300 text-sm"
+              >
+                الشروط والأحكام
               </Link>
-              <Link href="#">
+              <Link 
+                href="/" 
+                className="text-white text-[14px] hover:text-[#FF7700] transition-colors duration-300 text-sm"
+              >
+                سياسة الخصوصية
+              </Link>
+            </div>
+         </div>
+
+            {/* أيقونات وسائل التواصل الاجتماعي */}
+            <div className="flex gap-4">
+              <Link 
+                href="#" 
+                className="p-2 rounded-full "
+                aria-label="Instagram"
+              >
                 <Image
                   src="/images/social/insta.png"
-                  alt="Facebook"
-                  className="w-[24px] h-[24px]"
-                  width={240}
-                  height={240}
+                  alt="Instagram"
+                  className="w-6 h-6"
+                  width={26}
+                  height={26}
                 />
               </Link>
-              <Link href="#">
+              <Link 
+                href="#" 
+                className="p-2 rounded-full "
+                aria-label="Facebook"
+              >
                 <Image
                   src="/images/social/face.png"
                   alt="Facebook"
-                  className="w-[24px] h-[24px]"
-                  width={240}
-                  height={240}
+                  className="w-6 h-6"
+                  width={26}
+                  height={26}
                 />
               </Link>
-              <Link href="#">
+              <Link 
+                href="#" 
+                className="p-2 rounded-full "
+                aria-label="WhatsApp"
+              >
                 <Image
                   src="/images/social/wats.png"
-                  alt="Facebook"
-                  className="w-[24px] h-[24px]"
-                  width={240}
-                  height={240}
+                  alt="WhatsApp"
+                  className="w-6 h-6"
+                  width={26}
+                  height={26}
                 />
               </Link>
             </div>
           </div>
         </div>
-
-        {/* <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} متجري. جميع الحقوق محفوظة</p>
-        </div> */}
       </div>
     </footer>
   );

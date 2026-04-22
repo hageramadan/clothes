@@ -123,7 +123,7 @@ export function CategoriesDragDrop() {
         {/* زر السهم الأيمن */}
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-[#23A6F0] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden md:block"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-[#C092BD] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden md:block"
           style={{ 
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             transform: 'translateX(50%) translateY(-50%)'
@@ -136,7 +136,7 @@ export function CategoriesDragDrop() {
         {/* زر السهم الأيسر */}
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-[#23A6F0] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden md:block"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-[#C092BD] rounded-full shadow-lg p-2 md:p-3 hover:bg-[#1f98df] transition-all duration-300 hidden md:block"
           style={{ 
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             transform: 'translateX(-50%) translateY(-50%)'

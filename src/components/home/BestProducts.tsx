@@ -19,68 +19,69 @@ interface Product {
 const latestProducts: Product[] = [
   {
     id: "1",
-    name: "سماعات لاسلكية عالية الجودة مع قاعدة شحن",
-    price: 25000,
+    name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    price: 10000,
     originalPrice: 35000,
     discount: 28,
-    image: "/images/categories/cate1.png",
+    image: "/images/products/pro1.png",
     href: "/products/1",
   },
   {
     id: "2",
-    name: "ساعة ذكية رياضية مقاومة للماء",
-    price: 150000,
-    image: "/images/categories/cate2.png",
+     name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    price: 10000,
+    image: "/images/products/pro2.png",
     href: "/products/2",
   },
   {
     id: "3",
-    name: "حقيبة ظهر عصرية متعددة الاستخدامات",
-    price: 45000,
+    name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    price: 10000,
     originalPrice: 60000,
     discount: 25,
-    image: "/images/categories/cate3.png",
+    image: "/images/products/pro3.png",
     href: "/products/3",
   },
   {
     id: "4",
-    name: "سماعة ألعاب احترافية مع ميكروفون",
-    price: 85000,
-    image: "/images/categories/cate4.png",
+       name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    price: 10000,
+    image: "/images/products/pro9.png",
     href: "/products/4",
   },
   {
     id: "5",
-    name: "شاحن لاسلكي سريع 15W",
-    price: 32000,
-    originalPrice: 45000,
+     name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    price: 10000,
+    originalPrice: 15000,
     discount: 29,
-    image: "/images/categories/cate5.png",
+    image: "/images/products/pro5.png",
     href: "/products/5",
   },
   {
     id: "6",
-    name: "كابل USB-C متين 2 متر",
-    price: 8500,
-    image: "/images/products/p6.png",
+    name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    price: 10000,
+    image: "/images/products/pro6.png",
     href: "/products/6",
   },
   {
     id: "7",
-    name: "حافظة هاتف سيليكون شفافة",
-    price: 12500,
+     name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    price: 10000,
     originalPrice: 20000,
     discount: 37,
-    image: "/images/products/p1.png",
+    image: "/images/products/pro7.png",
     href: "/products/7",
   },
   {
     id: "8",
-    name: "باور بانك 10000mAh",
-    price: 55000,
-    image: "/images/products/p4.png",
+     name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    price: 10000,
+    image: "/images/products/pro10.png",
     href: "/products/8",
   },
+
 ];
 
 export function BestProducts() {
@@ -103,18 +104,18 @@ export function BestProducts() {
     <section className="py-6 md:py-12  bg-white">
       <div className="container-custom">
         {/* Header */}
-        <div className=" mb-10 flex  justify-between">
+        <div className="mb-2 md:mb-5  flex  justify-between">
           <h2 className="text-2xl md:text-3xl  font-bold mb-3" style={{ color: '#112B40' }}>
            الأكثر طلبا
           </h2>
-        <p className="text-[#23A6F0]">
+        <p className="text-[#08B2A7] text-[16px] font-bold">
           عرض المزيد
         </p>
           
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center mb-5 md:mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center mb-2 md:mb-5">
           {visibleProducts.map((product, index) => (
             <div
               key={product.id}
@@ -132,7 +133,7 @@ export function BestProducts() {
         {/* Loading State */}
         {isLoading && (
           <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#23A6F0]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C092BD]"></div>
           </div>
         )}
 
@@ -144,8 +145,8 @@ export function BestProducts() {
               className="group px-8 py-6 text-base font-semibold transition-all duration-300 hover:scale-105"
               style={{
                 backgroundColor: 'white',
-                color: '#23A6F0',
-                border: '2px solid #23A6F0',
+                color: '#C092BD',
+                border: '2px solid #C092BD',
                 borderRadius: '12px'
               }}
             >
@@ -160,7 +161,7 @@ export function BestProducts() {
           <div className="text-center">
             <Link
               href="/products"
-              className="inline-flex items-center gap-2 text-[#23A6F0] hover:text-[#1a8fd0] font-semibold transition-colors duration-300"
+              className="inline-flex items-center gap-2 text-[#C092BD] hover:text-[#1a8fd0] font-semibold transition-colors duration-300"
             >
               عرض جميع المنتجات
               <ChevronLeft className="h-5 w-5" />

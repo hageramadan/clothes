@@ -18,27 +18,27 @@ interface Slide {
 const slides: Slide[] = [
   {
     id: 1,
-    image: "/images/hero-1.jpg",
+    image: "/images/hero/hero1.png",
     title: "تجربة تقنية متكاملة",
-    description: "منتجات أصلية من أشهر العلامات التجارية مع ضمان وجودة تستحقها اكتشف أجهزة تجمع بين الأداء العالي والسعر المناسب مع عروض حصرية وتوصيل سريع.",
+    description: "منتجات أصلية من أشهر العلامات التجارية مع ضمان وجودة تستحقها اكتشف  عروض حصرية وتوصيل سريع.",
     buttonText: "تسوق الآن",
-    buttonLink: "/products",
+    buttonLink: "/",
   },
   {
     id: 2,
-    image: "/images/hero-2.png",
+    image: "/images/hero/hero2.png",
     title: "تجربة تقنية متكاملة",
-    description: "منتجات أصلية من أشهر العلامات التجارية مع ضمان وجودة تستحقها اكتشف أجهزة تجمع بين الأداء العالي والسعر المناسب مع عروض حصرية وتوصيل سريع.",
+    description: "منتجات أصلية من أشهر العلامات التجارية مع ضمان وجودة تستحقها اكتشف  عروض حصرية وتوصيل سريع.",
     buttonText: "تسوق الآن",
-    buttonLink: "/products",
+    buttonLink: "/",
   },
   {
     id: 3,
-    image: "/images/hero-1.jpg",
+    image: "/images/hero/hero1.png",
    title: "تجربة تقنية متكاملة",
-    description: "منتجات أصلية من أشهر العلامات التجارية مع ضمان وجودة تستحقها اكتشف أجهزة تجمع بين الأداء العالي والسعر المناسب مع عروض حصرية وتوصيل سريع.",
+    description: "منتجات أصلية من أشهر العلامات التجارية مع ضمان وجودة تستحقها اكتشف  عروض حصرية وتوصيل سريع.",
     buttonText: "تسوق الآن",
-    buttonLink: "/products",
+    buttonLink: "/",
   },
 ];
 
@@ -78,7 +78,7 @@ export function Hero() {
   };
 
   return (
-    <section className="relative w-full h-[70vh] overflow-hidden bg-gray-900">
+    <section className="relative w-full h-[70vh] overflow-hidden ">
       {/* Slides */}
       <div className="relative w-full h-full">
         {slides.map((slide, index) => (
@@ -99,23 +99,23 @@ export function Hero() {
                 priority={index === 0}
               />
               {/* Dark Overlay */}
-              <div className="absolute inset-0 bg-black/20" />
+              {/* <div className="absolute inset-0 bg-black/10" /> */}
             </div>
 
             {/* Content */}
-            <div className="absolute inset-0 z-20 flex items-center justify-center">
-              <div className="container-custom text-center text-white gap-3">
+            <div className="absolute inset-0 z-20 flex items-center">
+              <div className="container-custom  text-[#110322] gap-3">
                 <h1 className="text-3xl md:text-5xl lg:text-[58px] font-bold mb-4 animate-in fade-in slide-in-from-bottom-5 duration-700">
                   {slide.title}
                 </h1>
-                <p className="text-base md:text-lg lg:text-[20px] mb-8 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
+                <p className="text-[#110322] mt-5 md:text-lg lg:text-[20px] mb-8 max-w-2xl  animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
                   {slide.description}
                 </p>
               <Button
               asChild
-              className="animate-in text-[16px] font-bold fade-in slide-in-from-bottom-5 duration-700 delay-200 rounded-xl"
+              className="animate-in text-white text-[16px] font-bold fade-in slide-in-from-bottom-5 duration-700 delay-200 rounded-xl"
               style={{ 
-                backgroundColor: '#23A6F0',
+                backgroundColor: '#08B2A7',
                 width: '177px',
                 height: '56px'
               }}
@@ -156,7 +156,7 @@ export function Hero() {
             onClick={() => goToSlide(index)}
             className={`transition-all duration-300 rounded-full ${
               index === currentSlide
-                ? "w-8 h-2 bg-[#23A6F0]"
+                ? "w-8 h-2 bg-[#C092BD]"
                 : "w-2 h-2 bg-white/50 hover:bg-white/75"
             }`}
             aria-label={`Go to slide ${index + 1}`}
