@@ -23,7 +23,7 @@ export function CategoriesSection() {
         {/* العنصر الأول: رجال */}
         <Link 
           href={`/categories/${categories[0].slug}`} 
-          className="lg:col-span-1 row-span-2 block"
+          className="lg:col-span-1 lg:row-span-2 block"
         >
           <div className="group relative h-full w-full overflow-hidden rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-3">
             <Image
@@ -32,6 +32,9 @@ export function CategoriesSection() {
               fill
               className="object-cover transition-all duration-500 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              style={{
+                objectPosition: 'center 20%', 
+              }}
             />
             
             {/* Overlay متدرج جذاب */}
@@ -54,7 +57,7 @@ export function CategoriesSection() {
         {/* العنصر الثاني: نساء */}
         <Link 
           href={`/categories/${categories[1].slug}`} 
-          className="lg:col-span-1 row-span-2 block"
+          className="lg:col-span-1 lg:row-span-2 block"
         >
           <div className="group relative h-full w-full overflow-hidden rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-3">
             <Image
@@ -63,6 +66,9 @@ export function CategoriesSection() {
               fill
               className="object-cover transition-all duration-500 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 50vw"
+              style={{
+                objectPosition: 'center 20%', 
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 opacity-80 group-hover:opacity-90 transition-all duration-500" />
             <div className="absolute bottom-0 left-0 right-0 p-6">
