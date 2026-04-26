@@ -38,12 +38,13 @@ export function AdsHome1() {
 
   return (
     <section className="bg-gradient-to-r from-[#FFF5F4] to-[#FFE8E6] overflow-hidden py-0">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-0">
-        {/* تغيير flex-col-reverse إلى flex-col على الموبايل ثم flex-row على الشاشات المتوسطة */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8">
-           {/* Right Image - بدون padding رأسي وأسفل */}
-          <div className="w-full md:w-1/2 flex justify-center md:justify-end my-0 py-0">
-            <div className="relative w-full max-w-[280px] md:max-w-full my-0 py-0">
+      <div className="container mx-auto px-2 sm:px-6 lg:px-8 py-0">
+        {/* تغيير flex-col إلى flex-row على جميع الشاشات */}
+        <div className="flex flex-row items-center justify-between gap-2 md:gap-8">
+          
+          {/* Right Image - أصغر في الموبايل */}
+          <div className="w-1/2 md:w-1/2 flex justify-center md:justify-end my-0 py-0">
+            <div className="relative w-full max-w-[140px] md:max-w-full my-0 py-0">
               <Image 
                 src="/images/sale1.png" 
                 alt="Advertisement" 
@@ -52,7 +53,7 @@ export function AdsHome1() {
                 height={600} 
                 quality={100}
                 priority
-                sizes="(max-width: 768px) 100vw, 50vw"
+                sizes="(max-width: 768px) 50vw, 50vw"
                 style={{ 
                   objectPosition: 'center',
                   filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.1))',
@@ -64,48 +65,49 @@ export function AdsHome1() {
               />
             </div>
           </div>
-          {/* Left Content - تظهر في النصف العلوي على الموبايل */}
-          <div className="w-full md:w-1/2 text-center md:text-right pt-6 md:pt-0">
+
+          {/* Left Content - أصغر في الموبايل */}
+          <div className="w-1/2 md:w-1/2 text-center md:text-right pt-2 md:pt-0">
             <div className="max-w-xl mx-auto md:mx-0">
               
-              {/* Limited offer badge */}
+              {/* Limited offer badge - أصغر */}
               <div className="inline-block">
-                <p className="text-[12px] md:text-[16px] font-semibold px-3 py-1 md:px-4 md:py-1.5 bg-[#EC221F]/10 text-[#EC221F] rounded-full inline-block">
+                <p className="text-[8px] md:text-[16px] font-semibold px-1.5 py-0.5 md:px-4 md:py-1.5 bg-[#EC221F]/10 text-[#EC221F] rounded-full inline-block">
                   لفترة محدودة
                 </p>
               </div>
               
-              {/* Discount badge */}
-              <div className="mt-2 md:mt-6">
-                <p className="text-[24px] md:text-[48px]  font-bold text-[#EC221F]">
+              {/* Discount badge - أصغر */}
+              <div className="mt-1 md:mt-6">
+                <p className="text-[14px] md:text-[48px] font-bold text-[#EC221F]">
                   خصم 50%
                 </p>
-                <div className="w-16 md:w-20 h-1 bg-[#EC221F] rounded-full mt-1 md:mt-2 mx-auto md:mx-0"></div>
+                <div className="w-10 md:w-20 h-0.5 md:h-1 bg-[#EC221F] rounded-full mt-0.5 md:mt-2 mx-auto md:mx-0"></div>
               </div>
               
-              {/* Description */}
-              <p className="text-[#4A5568] text-sm md:text-[20px]  mt-2 md:mt-6 leading-relaxed">
-                .Lorem ipsum dolor sit amet consectetur
+              {/* Description - أصغر */}
+              <p className="text-[#4A5568] text-[7px] md:text-[20px] mt-1 md:mt-6 leading-tight md:leading-relaxed">
+                Lorem ipsum dolor sit amet consectetur
                 <br className="hidden sm:block" />
-                .Accumsan massa mauris nunc lacus
+                Accumsan massa mauris nunc lacus
               </p>
               
-              {/* Shop Button */}
+              {/* Shop Button - أصغر */}
               <Button
                 asChild
                 aria-label='buy now'
-                className="mt-4 md:mt-8 w-full sm:w-auto px-6 md:px-10 mb-4 md:mb-0 py-2 md:py-6 text-[12px] md:text-[18px] font-bold rounded-xl hover:scale-105 transition-all duration-300 shadow-lg"
+                className="rounded-xl
+                 mt-2 md:mt-8 w-full sm:w-auto px-3 md:px-10 mb-2 md:mb-0 py-1 
+                 md:py-6 text-[8px] md:text-[18px] font-bold hover:scale-105 transition-all duration-300 shadow-lg"
                 style={{ backgroundColor: '#EC221F' }}
               >
-                <Link href="#" className="flex items-center justify-center gap-2 text-white">
+                <Link href="#" className="flex items-center justify-center gap-1 md:gap-2 text-white">
                   تسوق الان
-                  <FaArrowLeft className="h-3 w-3 md:h-5 md:w-5" />
+                  <FaArrowLeft className="h-2 w-2 md:h-5 md:w-5" />
                 </Link>
               </Button>
             </div>
           </div>
-          
-         
           
         </div>
       </div>

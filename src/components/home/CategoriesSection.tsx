@@ -14,7 +14,7 @@ const categories = [
 
 export function CategoriesSection() {
   return (
-    <section className="py-4 md:py-8 container mx-auto px-4" style={{ minHeight: '568px' }}>
+    <section className="py-4 md:py-8 container mx-auto px-7" style={{ minHeight: '568px' }}>
       <h2 className="text-3xl font-bold  mb-4 md:mb-10text-[#112B40]">الاقسام</h2>
       
       {/* Grid Layout */}
