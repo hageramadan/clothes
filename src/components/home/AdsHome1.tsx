@@ -94,7 +94,7 @@ export function AdsHome1() {
               <Button
                 asChild
                 aria-label='buy now'
-                className="mt-4 md:mt-8 w-full sm:w-auto px-6 md:px-10 py-2 md:py-6 text-[12px] md:text-[18px] font-bold rounded-xl hover:scale-105 transition-all duration-300 shadow-lg"
+                className="mt-4 md:mt-8 w-full sm:w-auto px-6 md:px-10 mb-4 md:mb-0 py-2 md:py-6 text-[12px] md:text-[18px] font-bold rounded-xl hover:scale-105 transition-all duration-300 shadow-lg"
                 style={{ backgroundColor: '#EC221F' }}
               >
                 <Link href="#" className="flex items-center justify-center gap-2 text-white">
