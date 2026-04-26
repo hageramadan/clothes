@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { ProductCard } from "../products/ProductCard";
@@ -15,7 +15,7 @@ interface Product {
   href: string;
   originalPrice?: number;
   discount?: number;
-  colors?: Array<{ color: string; name: string }>; // إضافة خاصية الألوان
+  colors?: Array<{ color: string; name: string }>;
 }
 
 const latestProducts: Product[] = [
@@ -26,9 +26,9 @@ const latestProducts: Product[] = [
     originalPrice: 35000,
     discount: 28,
     image: "/images/products/product1.png",
-    hoverImage: "/images/products/product1-hover.png", // أضيفي الصورة الثانية
+    hoverImage: "/images/products/product1-hover.png",
     href: "/products/1",
-    colors: [ // أضيفي الألوان لكل منتج
+    colors: [
       { color: "#252B42", name: "أزرق داكن" },
       { color: "#E77C40", name: "برتقالي" },
       { color: "#23856D", name: "أخضر" },
@@ -142,20 +142,51 @@ const latestProducts: Product[] = [
 ];
 
 export function BestProducts() {
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [displayCount, setDisplayCount] = useState(8);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // محاكاة تحميل المنتجات عند تحميل المكون
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 1500); // مدة ظهور السبينر 1.5 ثانية
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLoadMore = () => {
-    setIsLoading(true);
-    // Simulate loading delay
+    setIsLoadingMore(true);
     setTimeout(() => {
       setDisplayCount((prev) => Math.min(prev + 6, latestProducts.length));
-      setIsLoading(false);
+      setIsLoadingMore(false);
     }, 500);
   };
 
   const visibleProducts = latestProducts.slice(0, displayCount);
   const hasMore = displayCount < latestProducts.length;
+
+  // عرض السبينر الرئيسي أثناء التحميل الأولي
+  if (isInitialLoading) {
+    return (
+      <section className="py-6 md:py-12 bg-white">
+        <div className="container-custom">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="flex flex-col items-center gap-4">
+              {/* Spinner تصميم أنيق */}
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#EC221F] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <p className="text-gray-500 text-sm animate-pulse">
+                جاري تحميل المنتجات...
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-6 md:py-12 bg-white">
@@ -193,19 +224,60 @@ export function BestProducts() {
                 href={product.href}
                 originalPrice={product.originalPrice}
                 discount={product.discount}
-                colors={product.colors} // تمرير الألوان
+                colors={product.colors}
               />
             </div>
           ))}
         </div>
 
-        {/* Loading State */}
-        {isLoading && (
+        {/* Loading More State - عند الضغط على عرض المزيد */}
+        {isLoadingMore && (
           <div className="flex justify-center items-center py-4 md:py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#EC221F]"></div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative">
+                <div className="w-8 h-8 border-3 border-gray-200 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-8 h-8 border-3 border-[#EC221F] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <p className="text-gray-400 text-xs">جاري التحميل...</p>
+            </div>
+          </div>
+        )}
+
+        {/* زر عرض المزيد - يمكن إظهاره إذا أردت */}
+        {hasMore && !isLoadingMore && (
+          <div className="text-center mt-4">
+            <Button
+              onClick={handleLoadMore}
+              className="px-6 py-2 text-sm font-semibold transition-all duration-300 hover:scale-105"
+              style={{
+                backgroundColor: 'transparent',
+                color: '#EC221F',
+                border: '2px solid #EC221F',
+                borderRadius: '8px'
+              }}
+            >
+              عرض المزيد
+            </Button>
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        .animate-in {
+          animation: fadeIn 0.5s ease-out forwards;
+        }
+      `}</style>
     </section>
   );
 }
