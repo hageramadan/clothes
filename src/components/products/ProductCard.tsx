@@ -8,14 +8,21 @@ import { Button } from "@/components/ui/button";
 import { FaRegStar } from "react-icons/fa";
 import { FaStar } from "react-icons/fa6";
 
+interface ColorOption {
+  color: string;
+  name: string;
+}
+
 interface ProductCardProps {
   id: string;
   name: string;
   price: number;
   image: string;
+  hoverImage?: string;
   href: string;
   originalPrice?: number;
   discount?: number;
+  colors?: ColorOption[]; // إضافة خاصية الألوان
 }
 
 export function ProductCard({ 
@@ -23,12 +30,20 @@ export function ProductCard({
   name, 
   price, 
   image, 
+  hoverImage,
   href,
   originalPrice,
-  discount 
+  discount,
+  colors = [ // ألوان افتراضية إذا لم يتم تمريرها
+    { color: "#252B42", name: "أزرق داكن" },
+    { color: "#E77C40", name: "برتقالي" },
+    { color: "#23856D", name: "أخضر" },
+    { color: "#EC221F", name: "أحمر" },
+  ]
 }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [currentImage, setCurrentImage] = useState(image);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -36,16 +51,17 @@ export function ProductCard({
     setIsFavorite(!isFavorite);
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Added to cart:", id);
+  // تغيير الصورة عند hover
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (hoverImage) {
+      setCurrentImage(hoverImage);
+    }
   };
 
-  const handleQuickView = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Quick view:", id);
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setCurrentImage(image);
   };
 
   return (
@@ -61,8 +77,8 @@ export function ProductCard({
         transform: isHovered ? 'translateY(-12px)' : 'translateY(0px)',
         transition: 'transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.4s ease',
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <Link href={href} className="block h-full" aria-label={`عرض تفاصيل ${name}`}>
         {/* Image Container */}
@@ -75,7 +91,7 @@ export function ProductCard({
           {/* Heart Icon - Top Left Corner */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-1 left-2 z-10 rounded-full p-1.5 bg-white shadow hover:bg-red-50 transition-all duration-200 hover:scale-110"
+            className="absolute top-1 left-2 z-10 rounded-full p-1.5  hover:bg-red-50 transition-all duration-200 hover:scale-110"
             style={{ color: isFavorite ? '#ef4444' : '#112B40' }}
             aria-label={isFavorite ? "إزالة من المفضلة" : "إضافة إلى المفضلة"}
             aria-pressed={isFavorite}
@@ -85,7 +101,7 @@ export function ProductCard({
           
           {/* Best Seller Badge */}
           <div className="absolute top-2 right-2 z-10">
-            <p className="text-[9px] sm:text-xs font-bold text-white bg-[#08B2A7] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
+            <p className="text-[9px] sm:text-xs font-bold text-white bg-[#EC221F] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
               الاكثر مبيعا
             </p>
           </div>
@@ -93,11 +109,11 @@ export function ProductCard({
           {/* Image with scale effect on hover */}
           <div className="overflow-hidden rounded-t-lg">
             <Image
-              src={image}
+              src={currentImage}
               alt={name}
               width={340}
               height={340}
-              className="object-cover w-full h-auto aspect-square transition-transform duration-500 ease-out group-hover:scale-105"
+              className="object-cover w-full h-auto aspect-square transition-all duration-500 ease-out"
               style={{
                 transform: isHovered ? 'scale(1.05)' : 'scale(1)',
               }}
@@ -107,7 +123,7 @@ export function ProductCard({
 
         {/* Product Info with slide up effect */}
         <div 
-          className="px-2 sm:px-3 flex flex-col gap-1 sm:gap-2 mt-2 transition-all duration-500 ease-out"
+          className="px-2 sm:px-3 flex flex-col gap-0 mt-2 transition-all duration-500 ease-out"
           style={{
             transform: isHovered ? 'translateY(-4px)' : 'translateY(0px)',
           }}
@@ -131,81 +147,32 @@ export function ProductCard({
 
           {/* Price */}
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm sm:text-base md:text-[17px] font-semibold" style={{ color: '#08B2A7' }}>
+            <span className="text-sm sm:text-base md:text-[17px] font-semibold" >
               {price.toLocaleString()} <span className="text-[10px] sm:text-xs md:text-[12px] font-semibold">EGP</span>
             </span>
           </div>
-          
-          {/* Add to cart button */}
-          <div
-            style={{
-              opacity: isHovered ? 1 : 0.9,
-              transition: 'opacity 0.3s ease 0.1s',
-            }}
-          >
-            <Button
-              onClick={handleAddToCart}
-              className="w-full text-[11px] sm:text-[14px] md:text-[16px] font-semibold rounded-[24px] bg-[#C092BD] hover:bg-[#8C6D8A] transition-all duration-300 text-white py-1.5 sm:py-2 md:py-2.5 px-4 border-2 border-[#C092BD] hover:border-[#8C6D8A] flex items-center justify-center gap-2 hover:scale-[1.02] h-auto"  
-            >
-              <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
-              <span>إضافة إلى السلة</span>
-            </Button>
+
+          {/* Color Circles */}
+          <div className="flex items-center justify-center gap-2 mt-1 mb-1">
+            {colors.map((circle, index) => (
+              <button
+                key={index}
+                className="w-4 h-4 rounded-full transition-all duration-200 hover:scale-110 hover:ring-2 hover:ring-offset-1"
+                style={{ 
+                  backgroundColor: circle.color,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                }}
+                aria-label={`لون ${circle.name}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log(`Selected color: ${circle.name}`);
+                }}
+              />
+            ))}
           </div>
         </div>
       </Link>
     </div>
-  );
-}
-
-// Example usage with multiple products
-export function ProductsGrid() {
-  const products = [
-    {
-      id: "1",
-      name: "سماعات لاسلكية عالية الجودة مع قاعدة شحن",
-      price: 360,
-      originalPrice: 35000,
-      discount: 28,
-      image: "/images/products/pro1.png",
-      href: "/",
-    },
-    {
-      id: "2",
-      name: "ساعة ذكية رياضية",
-      price: 360,
-      image: "/images/products/pro2.png",
-      href: "/",
-    },
-    {
-      id: "3",
-      name: "حقيبة ظهر عصرية",
-      price: 360,
-      originalPrice: 60000,
-      discount: 25,
-      image: "/images/products/pro3.png",
-      href: "/",
-    },
-    {
-      id: "4",
-      name: "سماعة ألعاب احترافية",
-      price: 360,
-      image: "/images/products/pro4.png",
-      href: "/",
-    },
-  ];
-
-  return (
-    <section className="py-4 sm:py-8 md:py-12 bg-gray-50">
-      <div className="container mx-auto px-3 sm:px-4">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8" style={{ color: '#112B40' }}>
-          منتجات مميزة
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
-          {products.map((product) => (
-            <ProductCard key={product.id} {...product} />
-          ))}
-        </div>
-      </div>
-    </section>
   );
 }

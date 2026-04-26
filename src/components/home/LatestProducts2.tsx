@@ -46,7 +46,7 @@ const latestProducts: Product[] = [
     id: "4",
        name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
     price: 10000,
-    image: "/images/products/pro14.png",
+    image: "/images/products/product4.png",
     href: "/products/4",
   },
   {
@@ -62,7 +62,7 @@ const latestProducts: Product[] = [
     id: "6",
     name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
     price: 10000,
-    image: "/images/products/pro16.png",
+    image: "/images/products/product5.png",
     href: "/products/6",
   },
   {
@@ -107,7 +107,7 @@ export function LatestProducts2() {
           <h2 className="text-2xl md:text-3xl  font-bold mb-3" style={{ color: '#112B40' }}>
             أحدث المنتجات
           </h2>
-        <p className="text-[#08B2A7] text-[16px] font-bold">
+        <p className="text-[#EC221F] text-[16px] font-bold">
           عرض المزيد
         </p>
           
@@ -131,8 +131,8 @@ export function LatestProducts2() {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C092BD]"></div>
+          <div className="flex justify-center items-center py-4 md:py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#EC221F]"></div>
           </div>
         )}
 
@@ -144,8 +144,8 @@ export function LatestProducts2() {
               className="group px-8 py-6 text-base font-semibold transition-all duration-300 hover:scale-105"
               style={{
                 backgroundColor: 'white',
-                color: '#C092BD',
-                border: '2px solid #C092BD',
+                color: '#EC221F',
+                border: '2px solid #EC221F',
                 borderRadius: '12px'
               }}
             >
@@ -160,7 +160,7 @@ export function LatestProducts2() {
           <div className="text-center">
             <Link
               href="/products"
-              className="inline-flex items-center gap-2 text-[#C092BD] hover:text-[#1a8fd0] font-semibold transition-colors duration-300"
+              className="inline-flex items-center gap-2 text-[#EC221F] hover:text-[#1a8fd0] font-semibold transition-colors duration-300"
             >
               عرض جميع المنتجات
               <ChevronLeft className="h-5 w-5" />

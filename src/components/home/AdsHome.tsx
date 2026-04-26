@@ -37,34 +37,34 @@ export function AdsHome() {
   const formatNumber = (num: number) => String(num).padStart(2, '0')
 
   return (
-    <section className="bg-[#FDF2F8]">
+    <section className="bg-[#141718]">
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10">
         
         {/* Left Content */}
         <div className="flex px-4 pb-5 sm:ps-[2%] md:ps-[4%] lg:ps-[10%] xl:ps-[13%] mx-auto flex-col gap-2 md:gap-[22px] w-full md:w-1/2 order-2 md:order-1">
           
           {/* Limited offer badge */}
-          <p className="text-[12px] md:text-[16px] font-semibold py-1 px-3 text-[#BE4646]">
+          <p className="text-[12px] text-center md:text-right md:text-[16px] font-semibold py-1 px-3 text-[#BE4646]">
             لفتره محدودة
           </p>
           
           {/* Discount badge */}
-          <div className="flex items-center gap-3">
-            <p className="text-[20px] md:text-[32px] font-bold py-1 px-3  text-[#191C1F] w-fit rounded-md">
+          <div className="flex items-center gap-3 md:justify-start justify-center">
+            <p className="text-[20px] md:text-[32px] font-bold py-1 px-3  text-[#FFF5F4] w-fit rounded-md">
               خصم 32%
             </p>
           
           </div>
           
 
-          <p className="text-sm md:text-[22px] text-[#191C1F] w-full md:w-[80%] leading-[1.5]">
+          <p className="text-sm text-center md:text-right md:text-[22px] text-[#FFF5F4] w-full md:w-[80%] leading-[1.5]">
             Lorem ipsum dolor sit amet consectetur.
           </p>
           
           {/* Countdown Timer */}
           <div className="mt-4">
-            <p className="text-sm md:text-base text-gray-600 mb-3">سينتهي الخصم خلال</p>
-            <div className="flex gap-3 md:gap-5">
+            <p className="text-sm text-center md:text-right md:text-base text-gray-300 mb-3">سينتهي الخصم خلال</p>
+            <div className="flex justify-center md:justify-start gap-3 md:gap-5">
              
             
              
@@ -100,7 +100,7 @@ export function AdsHome() {
             asChild
             aria-label='buy now'
             className="w-full md:w-[180px] md:h-[60px] animate-in text-[12px] md:text-[16px] font-bold fade-in slide-in-from-bottom-5 duration-700 delay-200 rounded-xl mt-4"
-            style={{ backgroundColor: '#08B2A7' }}
+            style={{ backgroundColor: '#EC221F' }}
           >
             <Link href="#" className="flex items-center justify-center gap-2 text-white">
               تسوق الان
@@ -110,16 +110,17 @@ export function AdsHome() {
         </div>
         
         {/* Right Image */}
-        <div className="w-full md:w-1/2 md:ps-30 order-1 md:order-2">
-          <Image 
-            src="/images/advs.png" 
-            alt="Advertisement" 
-            className="w-full h-auto md:w-[100%] md:h-[532px] object-cover" 
-            width={500} 
-            height={300} 
-            priority
-          />
-        </div>
+      <div className="w-full md:w-1/2 md:ps-30 order-1 md:order-2">
+  <Image 
+    src="/images/sale.png" 
+    alt="Advertisement" 
+    className="w-full h-auto md:w-[100%] md:h-[532px] object-cover" 
+    width={500} 
+    height={300} 
+    style={{ objectPosition: 'center 0%' }} // ينزل الصورة من فوق بنسبة 20%
+    priority
+  />
+</div>
         
       </div>
     </section>

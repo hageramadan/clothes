@@ -9,7 +9,7 @@ import { IoLogoWhatsapp } from "react-icons/io";
 import { FaFacebook } from "react-icons/fa";
 export function SubNavbar() {
   return (
-    <div className="w-full bg-[#C092BD] border-b border-[#E4E7E9] py-2 md:py-3 ">
+    <div className="w-full bg-[#EC221F] border-b border-[#E4E7E9] py-2 md:py-3 ">
       <div className="container mx-auto px-4 md:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0">
           {/* Right Section - Email */}

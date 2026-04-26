@@ -7,7 +7,7 @@ import { PiLineVerticalLight, PiLineVerticalThin } from "react-icons/pi";
 export function Footer() {
   return (
     <footer className="border-t mt-auto bg-[#141718] text-white pt-6 md:pt-10">
-      <div className="container mx-auto px-4 py-8 md:py-12">
+      <div className="container mx-auto px-4 py-4 md:py-8 md:py-12">
         {/* القسم العلوي - الشبكة الرئيسية */}
         <div className="flex flex-wrap md:flex-row flex-col items-center justify-center md:justify-between gap-8 mb-8">
           

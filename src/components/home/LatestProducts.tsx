@@ -11,75 +11,133 @@ interface Product {
   name: string;
   price: number;
   image: string;
+  hoverImage?: string;
   href: string;
   originalPrice?: number;
   discount?: number;
+  colors?: Array<{ color: string; name: string }>; // إضافة خاصية الألوان
 }
 
 const latestProducts: Product[] = [
   {
     id: "1",
-    name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    name: "Lorem ipsum dolor sit amet consectetur",
     price: 10000,
     originalPrice: 35000,
     discount: 28,
-    image: "/images/products/pro1.png",
+    image: "/images/products/product1.png",
+    hoverImage: "/images/products/product1-hover.png", // أضيفي الصورة الثانية
     href: "/products/1",
+    colors: [ // أضيفي الألوان لكل منتج
+      { color: "#252B42", name: "أزرق داكن" },
+      { color: "#E77C40", name: "برتقالي" },
+      { color: "#23856D", name: "أخضر" },
+      { color: "#EC221F", name: "أحمر" },
+    ],
   },
   {
     id: "2",
-     name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    name: "Lorem ipsum dolor sit amet consectetur",
     price: 10000,
-    image: "/images/products/pro2.png",
+    image: "/images/products/product2.png",
+    hoverImage: "/images/products/product2-hover.png",
     href: "/products/2",
+    colors: [
+      { color: "#252B42", name: "أزرق داكن" },
+      { color: "#E77C40", name: "برتقالي" },
+      { color: "#23856D", name: "أخضر" },
+      { color: "#EC221F", name: "أحمر" },
+    ],
   },
   {
     id: "3",
-    name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    name: "Lorem ipsum dolor sit amet consectetur",
     price: 10000,
     originalPrice: 60000,
     discount: 25,
-    image: "/images/products/pro3.png",
+    image: "/images/products/product3.png",
+    hoverImage: "/images/products/product3-hover.png",
     href: "/products/3",
+    colors: [
+      { color: "#252B42", name: "أزرق داكن" },
+      { color: "#E77C40", name: "برتقالي" },
+      { color: "#23856D", name: "أخضر" },
+      { color: "#EC221F", name: "أحمر" },
+    ],
   },
   {
     id: "4",
-       name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    name: "Lorem ipsum dolor sit amet consectetur",
     price: 10000,
-    image: "/images/products/pro4.png",
+    image: "/images/products/product5.png",
+    hoverImage: "/images/products/product5-hover.png",
     href: "/products/4",
+    colors: [
+      { color: "#252B42", name: "أزرق داكن" },
+      { color: "#E77C40", name: "برتقالي" },
+      { color: "#23856D", name: "أخضر" },
+      { color: "#EC221F", name: "أحمر" },
+    ],
   },
   {
     id: "5",
-     name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    name: "Lorem ipsum dolor sit amet consectetur",
     price: 10000,
     originalPrice: 15000,
     discount: 29,
-    image: "/images/products/pro5.png",
+    image: "/images/products/product4.png",
+    hoverImage: "/images/products/product4-hover.png",
     href: "/products/5",
+    colors: [
+      { color: "#252B42", name: "أزرق داكن" },
+      { color: "#E77C40", name: "برتقالي" },
+      { color: "#23856D", name: "أخضر" },
+      { color: "#EC221F", name: "أحمر" },
+    ],
   },
   {
     id: "6",
-    name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    name: "Lorem ipsum dolor sit amet consectetur",
     price: 10000,
-    image: "/images/products/pro6.png",
+    image: "/images/products/product3.png",
+    hoverImage: "/images/products/product3-hover.png",
     href: "/products/6",
+    colors: [
+      { color: "#252B42", name: "أزرق داكن" },
+      { color: "#E77C40", name: "برتقالي" },
+      { color: "#23856D", name: "أخضر" },
+      { color: "#EC221F", name: "أحمر" },
+    ],
   },
   {
     id: "7",
-     name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    name: "Lorem ipsum dolor sit amet consectetur",
     price: 10000,
     originalPrice: 20000,
     discount: 37,
-    image: "/images/products/pro7.png",
+    image: "/images/products/product4.png",
+    hoverImage: "/images/products/product4-hover.png",
     href: "/products/7",
+    colors: [
+      { color: "#252B42", name: "أزرق داكن" },
+      { color: "#E77C40", name: "برتقالي" },
+      { color: "#23856D", name: "أخضر" },
+      { color: "#EC221F", name: "أحمر" },
+    ],
   },
   {
     id: "8",
-     name: "Lorem ipsum dolor sit amet consectetur. Accumsan massa mauris nunc lacus.",
+    name: "Lorem ipsum dolor sit amet consectetur",
     price: 10000,
-    image: "/images/products/pro8.png",
+    image: "/images/products/product5.png",
+    hoverImage: "/images/products/product5-hover.png",
     href: "/products/8",
+    colors: [
+      { color: "#252B42", name: "أزرق داكن" },
+      { color: "#E77C40", name: "برتقالي" },
+      { color: "#23856D", name: "أخضر" },
+      { color: "#EC221F", name: "أحمر" },
+    ],
   },
 ];
 
@@ -100,17 +158,19 @@ export function LatestProducts() {
   const hasMore = displayCount < latestProducts.length;
 
   return (
-    <section className="py-6 md:py-12  bg-white">
+    <section className="py-6 md:py-12 bg-white">
       <div className="container-custom">
         {/* Header */}
-        <div className=" mb-2 md:mb-5 flex justify-between">
-          <h2 className="text-2xl md:text-3xl  font-bold mb-3" style={{ color: '#112B40' }}>
+        <div className="mb-2 md:mb-5 flex justify-between items-center">
+          <h2 className="text-2xl md:text-3xl font-bold" style={{ color: '#112B40' }}>
             أحدث المنتجات
           </h2>
-        <p className="text-[#08B2A7] text-[16px] font-bold">
-          عرض المزيد
-        </p>
-          
+          <Link 
+            href="/products" 
+            className="text-[#EC221F] text-[16px] font-bold hover:underline transition-all duration-300"
+          >
+            عرض المزيد
+          </Link>
         </div>
 
         {/* Products Grid */}
@@ -124,51 +184,27 @@ export function LatestProducts() {
                 animationDelay: `${index * 100}ms`
               }}
             >
-              <ProductCard {...product} />
+              <ProductCard 
+                id={product.id}
+                name={product.name}
+                price={product.price}
+                image={product.image}
+                hoverImage={product.hoverImage}
+                href={product.href}
+                originalPrice={product.originalPrice}
+                discount={product.discount}
+                colors={product.colors} // تمرير الألوان
+              />
             </div>
           ))}
         </div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C092BD]"></div>
+          <div className="flex justify-center items-center py-4 md:py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#EC221F]"></div>
           </div>
         )}
-
-        {/* View More Button */}
-        {/* {hasMore && !isLoading && (
-          <div className="text-center">
-            <Button
-              onClick={handleLoadMore}
-              className="group px-8 py-6 text-base font-semibold transition-all duration-300 hover:scale-105"
-              style={{
-                backgroundColor: 'white',
-                color: '#C092BD',
-                border: '2px solid #C092BD',
-                borderRadius: '12px'
-              }}
-            >
-              عرض المزيد
-              <ChevronLeft className="mr-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-            </Button>
-          </div>
-        )} */}
-
-        {/* View All Link */}
-        {/* {!hasMore && displayCount > 0 && (
-          <div className="text-center">
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-2 text-[#C092BD] hover:text-[#1a8fd0] font-semibold transition-colors duration-300"
-            >
-              عرض جميع المنتجات
-              <ChevronLeft className="h-5 w-5" />
-            </Link>
-          </div>
-        )} */}
-
-
       </div>
     </section>
   );

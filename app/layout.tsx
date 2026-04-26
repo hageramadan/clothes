@@ -14,7 +14,7 @@ const almarai = Almarai({
 });
 
 export const metadata: Metadata = {
-  title: "متجري - منتجات مميزة",
+  title: "clothes - منتجات مميزة",
   description: "أفضل المنتجات في مكان واحد",
 };
 
@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className={almarai.className}>
         <CartProvider>
           <FavoritesProvider>
-            <SubNavbar/>
+          
             <Navbar />
             <main className="min-h-screen">{children}</main>
             {/* <Footer /> */}
