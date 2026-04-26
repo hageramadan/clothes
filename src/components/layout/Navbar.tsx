@@ -33,6 +33,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
+  const [showMobileCategoriesDropdown, setShowMobileCategoriesDropdown] = useState(false); // 🔴 حالة منفصلة للموبايل
   const [isScrolled, setIsScrolled] = useState(false);
   
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +84,7 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showSearchInput]);
 
-  // Close categories dropdown when clicking outside
+  // Close categories dropdown when clicking outside (Desktop only)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showCategoriesDropdown && categoriesRef.current && !categoriesRef.current.contains(event.target as Node)) {
@@ -105,11 +106,14 @@ export function Navbar() {
       if (e.key === 'Escape' && showCategoriesDropdown) {
         setShowCategoriesDropdown(false);
       }
+      if (e.key === 'Escape' && showMobileCategoriesDropdown) {
+        setShowMobileCategoriesDropdown(false);
+      }
     };
     
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [showSearchInput, showCategoriesDropdown]);
+  }, [showSearchInput, showCategoriesDropdown, showMobileCategoriesDropdown]);
 
   return (
     <header 
@@ -152,7 +156,7 @@ export function Navbar() {
                     <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showCategoriesDropdown ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* Categories Dropdown */}
+                  {/* Categories Dropdown - Desktop */}
                   {showCategoriesDropdown && (
                     <div 
                       className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg border shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
@@ -185,7 +189,6 @@ export function Navbar() {
                     isScrolled ? 'text-[#112B40]' : 'text-white'
                   }`}
                   style={{ 
-                    // color: pathname === link.href ? '#EC221F' : (isScrolled ? '#112B40' : 'white'),
                     fontWeight: pathname === link.href ? '700' : '400'
                   }}
                 >
@@ -204,7 +207,7 @@ export function Navbar() {
                 size="icon" 
                 aria-label="search"
                 onClick={() => setShowSearchInput(!showSearchInput)}
-                className="relative z-10 hover:bg-white/30  rounded-[10px]"
+                className="relative z-10 hover:bg-white/30 rounded-[10px]"
                 style={{ color: isScrolled ? '#195073' : 'white' }}
               >
                 <Search className="h-5 w-5" />
@@ -254,7 +257,7 @@ export function Navbar() {
               variant="ghost" 
               size="icon" 
               asChild 
-              className="relative hover:bg-white/30  rounded-[10px]"
+              className="relative hover:bg-white/30 rounded-[10px]"
               aria-label="favorites"
               style={{ color: isScrolled ? '#195073' : 'white' }}
             >
@@ -269,7 +272,7 @@ export function Navbar() {
               aria-label="cart"
               size="icon" 
               asChild 
-              className="relative  hover:bg-white/30 rounded-[10px]"
+              className="relative hover:bg-white/30 rounded-[10px]"
               style={{ color: isScrolled ? '#195073' : 'white' }}
             >
               <Link href="/cart">
@@ -285,7 +288,7 @@ export function Navbar() {
               className={`hidden sm:inline-flex gap-2 hover:text-white transition-all duration-300 ${
                 isScrolled 
                   ? 'bg-[#EC221F] hover:bg-[#a880a6] text-white' 
-                  : ' backdrop-blur-sm hover:bg-white/30 text-white '
+                  : 'backdrop-blur-sm hover:bg-white/30 text-white'
               } rounded-[16px]`}
             >
               <Link href="/auth/login">
@@ -300,9 +303,12 @@ export function Navbar() {
             variant="ghost"
             size="icon"
             aria-label="show menu"
-            className="md:hidden hover:bg-white/30  rounded-[10px]"
+            className="md:hidden hover:bg-white/30 rounded-[10px]"
             style={{ color: isScrolled ? '#195073' : 'white' }}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => {
+              setMobileMenuOpen(!mobileMenuOpen);
+              setShowMobileCategoriesDropdown(false); // إغلاق قائمة الفئات عند فتح/غلق القائمة
+            }}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Image src="/images/Menu.png" alt="Menu" className="w-[24px] h-[24px]" width={24} height={24} style={{ filter: isScrolled ? 'none' : 'brightness(0) invert(1)' }} />}
           </Button>
@@ -311,7 +317,6 @@ export function Navbar() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t py-4 space-y-4 animate-in slide-in-from-top-2 duration-200 bg-white" style={{ borderColor: '#e2e8f0' }}>
-            {/* Same mobile menu content... */}
             <form onSubmit={handleSearch} className="relative px-3">
               <Search className="absolute right-5 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: '#94a3b8' }} />
               <Input
@@ -364,12 +369,14 @@ export function Navbar() {
                       aria-label="categories"
                       className="px-3 py-3 text-[16px] font-medium rounded-md transition-colors hover:bg-gray-50 flex items-center justify-between w-full"
                       style={{ color: '#112B40' }}
-                      onClick={() => setShowCategoriesDropdown(!showCategoriesDropdown)}
+                      onClick={() => setShowMobileCategoriesDropdown(!showMobileCategoriesDropdown)} // 🔴 استخدام الحالة المنفصلة للموبايل
                     >
                       {link.name}
-                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showCategoriesDropdown ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showMobileCategoriesDropdown ? 'rotate-180' : ''}`} />
                     </button>
-                    {showCategoriesDropdown && (
+                    
+                    {/* 🔴 قائمة الفئات في الموبايل - تستخدم الحالة المنفصلة */}
+                    {showMobileCategoriesDropdown && (
                       <div className="mr-4 space-y-1">
                         {categories.map((category) => (
                           <Link
@@ -379,7 +386,7 @@ export function Navbar() {
                             style={{ color: '#112B40' }}
                             onClick={() => {
                               setMobileMenuOpen(false);
-                              setShowCategoriesDropdown(false);
+                              setShowMobileCategoriesDropdown(false); // 🔴 إغلاق القائمة بعد الضغط على رابط
                             }}
                             onMouseEnter={(e) => e.currentTarget.style.color = '#EC221F'}
                             onMouseLeave={(e) => e.currentTarget.style.color = '#112B40'}
