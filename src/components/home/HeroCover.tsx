@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa";
@@ -47,6 +47,14 @@ export function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [loadedImages, setLoadedImages] = useState<{ [key: number]: boolean }>({});
+  
+  // Touch swipe state
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  
+  // Minimum swipe distance (in pixels)
+  const minSwipeDistance = 50;
 
   // Auto-play functionality
   useEffect(() => {
@@ -81,6 +89,44 @@ export function Hero() {
     setLoadedImages(prev => ({ ...prev, [index]: true }));
   };
 
+  // Touch event handlers for swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    // Pause auto-play while touching
+    setIsAutoPlaying(false);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) {
+      setIsAutoPlaying(true);
+      return;
+    }
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      // Swipe left -> next slide
+      goToNextSlide();
+    } else if (isRightSwipe) {
+      // Swipe right -> previous slide
+      goToPrevSlide();
+    }
+    
+    // Reset touch values
+    setTouchStart(null);
+    setTouchEnd(null);
+    
+    // Resume auto-play after swipe
+    setTimeout(() => setIsAutoPlaying(true), 10000);
+  };
+
   // Preload adjacent images for smoother transitions
   useEffect(() => {
     const nextIndex = (currentSlide + 1) % slides.length;
@@ -96,7 +142,13 @@ export function Hero() {
   }, [currentSlide, loadedImages]);
 
   return (
-    <section className="relative w-full h-[70vh] md:h-[80vh] overflow-hidden bg-gradient-to-r from-gray-50 to-gray-100">
+    <section 
+      ref={sectionRef}
+      className="relative w-full h-[70vh] md:h-[80vh] overflow-hidden bg-gradient-to-r from-gray-50 to-gray-100"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       {/* Slides */}
       <div className="relative w-full h-full">
         {slides.map((slide, index) => (
@@ -119,7 +171,6 @@ export function Hero() {
                 className={`object-cover transition-opacity duration-500 ${
                   loadedImages[index] ? "opacity-100" : "opacity-0"
                 }`}
-                // priority={index === currentSlide}
                 quality={100}
                 sizes="100vw"
                 onLoad={() => handleImageLoad(index)}
@@ -130,8 +181,8 @@ export function Hero() {
             </div>
 
             {/* Content */}
-            <div className="absolute inset-0 z-20 flex items-center justify-center md:justify-start">
-              <div className="container-custom px-4 sm:px-6 lg:px-8 w-full">
+            <div className="absolute inset-0 z-20 flex items-center justify-center md:justify-start pointer-events-none">
+              <div className="container-custom px-4 sm:px-6 lg:px-8 w-full pointer-events-auto">
                 <div className="max-w-3xl mx-auto md:mx-0 text-center md:text-right">
                   <h1 className="text-xl sm:text-2xl md:text-5xl lg:text-[58px] font-bold mb-2 md:mb-4 animate-in fade-in slide-in-from-bottom-5 duration-700 drop-shadow-lg text-white">
                     {slide.title}
@@ -162,10 +213,10 @@ export function Hero() {
         ))}
       </div>
 
-      {/* Navigation Buttons - أضفنا أزرار التحكم */}
+      {/* Navigation Buttons - Hidden on mobile, visible on desktop */}
       <button
         onClick={goToPrevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300 hidden md:block"
         aria-label="Previous slide"
       >
         <ChevronLeft className="h-6 w-6" />
@@ -173,11 +224,19 @@ export function Hero() {
       
       <button
         onClick={goToNextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300 hidden md:block"
         aria-label="Next slide"
       >
         <ChevronRight className="h-6 w-6" />
       </button>
+
+      {/* Swipe Indicator for Mobile */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 md:hidden pointer-events-none opacity-0 animate-pulse">
+        <div className="flex gap-4 text-white/50">
+          <ChevronRight className="h-8 w-8" />
+          <ChevronLeft className="h-8 w-8" />
+        </div>
+      </div>
 
       {/* Dots Navigation */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
