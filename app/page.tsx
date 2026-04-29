@@ -1,10 +1,10 @@
 import { AdsHome } from "@/components/home/AdsHome";
 import { AdsHome1 } from "@/components/home/AdsHome1";
+import { AdsSection } from "@/components/home/AdsSection";
 import { BestProducts } from "@/components/home/BestProducts";
 import { CategoriesSection } from "@/components/home/CategoriesSection";
 import { Hero } from "@/components/home/HeroCover";
 import { LatestProducts, } from "@/components/home/LatestProducts";
-import { LatestProducts2 } from "@/components/home/LatestProducts2";
 import { Footer } from "@/components/layout/Footer";
 
 
@@ -15,10 +15,11 @@ export default function Home() {
     <Hero />
     <CategoriesSection />
    <LatestProducts />
-   <AdsHome1/>
+   {/* <AdsHome1/> */}
+   <AdsSection variant="light" /> 
    <BestProducts/>
-   <AdsHome/>
-   
+   {/* <AdsHome/>    */}
+   <AdsSection variant="dark" /> 
    <BestProducts/>
    <Footer />
    </div>
