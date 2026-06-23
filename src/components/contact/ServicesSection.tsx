@@ -1,72 +1,145 @@
-// components/contact/ServicesSection.tsx (نسخة 3 خدمات)
+// components/contact/ServicesSection.tsx
 "use client";
+import { useState, useEffect } from "react";
 import { FaRegEnvelope } from "react-icons/fa";
 import { RiCustomerService2Line } from "react-icons/ri";
 import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import SocialLinks from "./SocialLinks";
 
+// خريطة لتحديد الأيقونة المناسبة حسب نوع الخدمة
+const iconMap: Record<string, React.ElementType> = {
+  email: FaRegEnvelope,
+  phone: RiCustomerService2Line,
+  whatsapp: IoChatbubbleEllipsesOutline,
+
+};
+
+// النوع الافتراضي للأيقونة
+const defaultIcon = IoChatbubbleEllipsesOutline;
+
 interface ServiceItem {
   id: number;
-  icon: React.ElementType;
+  type: string;
   title: string;
   description: string;
+  value: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
 }
 
-const servicesData: ServiceItem[] = [
-  {
-    id: 1,
-    icon: FaRegEnvelope,
-    title: `لدعم عبر البريد الإلكتروني`,
-    description: `راسلنا عبر البريد الإلكتروني لأي استفسار بخصوص الطلبات أو الشراكة والتسويق، وسيقوم فريقنا بالرد عليك في أسرع وقت: support@domain.com. `
-  },
-  {
-    id: 2,
-    icon: RiCustomerService2Line,
-    title: "اتصل بنا هاتفياً",
-    description: `فريق خدمة العملاء جاهز للرد على اتصالاتكم واستفساراتكم ومساعدتكم في تتبع الشحنات وعمليات الاسترجاع عبر رقمنا الموحد: 0123456790`
-  },
-  {
-    id: 3,
-    icon: IoChatbubbleEllipsesOutline,
-    title: `المحادثة الفورية المباشرة`,
-    description: ` يمكنك بدء محادثة فورية ومباشرة الآن مع أحد ممثلي خدمة العملاء عبر الموقع أو تطبيق الواتساب للحصول على دعم فوري وحل مشكلتك بلحظات.`
-  }
-];
-
 export default function ServicesSection() {
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await fetch('https://dukanah.admin.t-carts.com/api/contact-cards'); // أو استخدم الـ URL الكامل
+        // إذا كان الـ API خارجي:
+        // const response = await fetch('{{url}}/contact-cards');
+        
+        if (!response.ok) {
+          throw new Error('فشل في جلب البيانات');
+        }
+        
+        const result = await response.json();
+        
+        if (result.result && result.data) {
+          // تصفية الخدمات النشطة فقط وترتيبها حسب sort_order
+          const activeServices = result.data
+            .filter((item: ServiceItem) => item.is_active)
+            .sort((a: ServiceItem, b: ServiceItem) => a.sort_order - b.sort_order);
+          setServices(activeServices);
+        } else {
+          throw new Error(result.message || 'حدث خطأ في جلب البيانات');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'حدث خطأ غير معروف');
+        console.error('Error fetching services:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  // دالة للحصول على الأيقونة المناسبة
+  const getIcon = (type: string): React.ElementType => {
+    return iconMap[type] || defaultIcon;
+  };
+
+  // عرض حالة التحميل
+  if (loading) {
+    return (
+      <div className="bg-[#141718] rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm mb-5">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF7700]"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // عرض حالة الخطأ
+  if (error) {
+    return (
+      <div className="bg-[#141718] rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm mb-5">
+        <div className="text-center py-8 text-red-500">
+          <p>عذراً، حدث خطأ في تحميل البيانات</p>
+          <p className="text-sm text-gray-400 mt-2">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // عرض الرسالة في حال عدم وجود بيانات
+  if (services.length === 0) {
+    return (
+      <div className="bg-[#141718] rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm mb-5">
+        <div className="text-center py-8 text-gray-400">
+          <p>لا توجد خدمات متاحة حالياً</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#141718] rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm mb-5">
-      <div className="grid grid-cols-1  gap-3  md:gap-6 ">
-        {servicesData.map((service) => {
-          const Icon = service.icon;
+      <div className="grid grid-cols-1 gap-3 md:gap-6">
+        {services.map((service) => {
+          const Icon = getIcon(service.type);
           return (
             <div
               key={service.id}
-              className={`flex md:flex-row flex-col gap-5 p-6 rounded-xl transition-all duration-300 bg-[#272E31] border border-white/15`}
+              className="flex md:flex-row flex-col gap-5 p-6 rounded-xl transition-all duration-300 bg-[#272E31] border border-white/15"
             >
               {/* الأيقونة */}
-              <div className={`hidden md:flex w-16 h-16 px-3.5 bg-[#FF7700]  items-center justify-center rounded-full p-3 `}>
-                <Icon className={`w-8 h-8 text-white`} />
+              <div className="hidden md:flex w-16 h-16 px-3.5 bg-[#FF7700] items-center justify-center rounded-full p-3">
+                <Icon className="w-8 h-8 text-white" />
               </div>
-              
+
               <div>
                 {/* العنوان */}
-              <h2 className="text-lg font-bold text-white mb-2">
-                {service.title}
-              </h2>
-              
-              {/* الوصف */}
-              <p className="text-gray-100 text-sm leading-relaxed">
-                {service.description}
-              </p>
+                <h2 className="text-lg font-bold text-white mb-2">
+                  {service.title}
+                </h2>
+
+                {/* الوصف */}
+                <p className="text-gray-100 text-sm leading-relaxed">
+                  {service.description}
+                </p>
+                
+                {/* إضافة القيمة (البريد/الهاتف/الواتساب) أسفل الوصف */}
+               
               </div>
             </div>
           );
         })}
       </div>
-    <div className="w-full h-[1px] mt-7 bg-white/40"></div>
-   <SocialLinks/>
-     
+      <div className="w-full h-[1px] mt-7 bg-white/40"></div>
+      <SocialLinks />
     </div>
   );
 }

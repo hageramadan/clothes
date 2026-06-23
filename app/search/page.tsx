@@ -12,10 +12,6 @@ import Link from "next/link";
 
 const API_URL = 'https://dukanah.admin.t-carts.com/api';
 
-// ✅ متغيرات لمنع التكرار على مستوى الدالة
-let isFetching = false;
-let lastFetchTime = 0;
-
 // دالة جلب التوكن
 const getToken = (): string | null => {
   if (typeof window !== 'undefined') {
@@ -26,31 +22,6 @@ const getToken = (): string | null => {
 
 // دالة جلب نتائج البحث باستخدام endpoint /products?search=
 const searchProducts = async (query: string, page: number = 1, perPage: number = 12) => {
-  // ✅ منع التكرار في نفس الثانية
-  const now = Date.now();
-  if (isFetching || (now - lastFetchTime < 300)) {
-    console.log("⏳ Skipping duplicate search request");
-    return {
-      result: true,
-      data: {
-        products: [],
-        pagination: {
-          current_page: 1,
-          last_page: 1,
-          per_page: perPage,
-          total: 0,
-          from: 0,
-          to: 0,
-          next_page: null,
-          previous_page: null
-        }
-      }
-    };
-  }
-  
-  isFetching = true;
-  lastFetchTime = now;
-  
   try {
     const token = getToken();
     console.log(`🟢 Searching products for "${query}" page ${page}`);
@@ -71,8 +42,6 @@ const searchProducts = async (query: string, page: number = 1, perPage: number =
   } catch (error) {
     console.error("Search error:", error);
     throw error;
-  } finally {
-    isFetching = false;
   }
 };
 
@@ -135,6 +104,7 @@ function SearchContent() {
   
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(true); // ✅ حالة للتحميل الأولي
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
@@ -148,13 +118,14 @@ function SearchContent() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const isSearchChangeRef = useRef(false);
 
-  // ✅ دالة جلب نتائج البحث مع منع التكرار
+  // ✅ دالة جلب نتائج البحث المحسنة
   const fetchSearchResults = useCallback(async () => {
     if (!query) {
       setProducts([]);
       setTotalProducts(0);
       setLastPage(1);
       setIsLoading(false);
+      setIsFirstLoad(false);
       return;
     }
 
@@ -165,7 +136,9 @@ function SearchContent() {
     
     abortControllerRef.current = new AbortController();
     
+    // ✅ تعيين حالة التحميل
     setIsLoading(true);
+    
     try {
       const result = await searchProducts(query, currentPage, perPage);
       
@@ -201,25 +174,26 @@ function SearchContent() {
       }
     } finally {
       if (!abortControllerRef.current?.signal.aborted) {
-        setIsLoading(false);
+        // ✅ تأخير إيقاف التحميل قليلاً لمنع الوميض
+        setTimeout(() => {
+          setIsLoading(false);
+          setIsFirstLoad(false);
+        }, 200);
       }
     }
   }, [query, currentPage, perPage]);
 
-  // ✅ جلب النتائج عند تغيير البحث أو الصفحة
+  // ✅ جلب النتائج عند تحميل الصفحة أو تغيير البحث
   useEffect(() => {
     if (query) {
-      if (isSearchChangeRef.current || hasLoadedRef.current) {
-        fetchSearchResults();
-      } else {
-        hasLoadedRef.current = true;
-        fetchSearchResults();
-      }
+      setIsFirstLoad(true);
+      fetchSearchResults();
     } else {
       setProducts([]);
       setTotalProducts(0);
       setLastPage(1);
       setIsLoading(false);
+      setIsFirstLoad(false);
     }
     
     return () => {
@@ -227,7 +201,7 @@ function SearchContent() {
         abortControllerRef.current.abort();
       }
     };
-  }, [query, currentPage, fetchSearchResults]);
+  }, [query, fetchSearchResults]);
 
   // ✅ إعادة تعيين الصفحة عند تغيير البحث
   useEffect(() => {
@@ -236,6 +210,13 @@ function SearchContent() {
       setCurrentPage(1);
     }
   }, [query]);
+
+  // ✅ تغيير الصفحة
+  useEffect(() => {
+    if (currentPage > 1 && query) {
+      fetchSearchResults();
+    }
+  }, [currentPage, query, fetchSearchResults]);
 
   // ✅ إعادة الترتيب عند تغيير خيار الترتيب (فلتر محلي)
   useEffect(() => {
@@ -289,7 +270,8 @@ function SearchContent() {
     return `عرض ${from} - ${to} من ${totalProducts} نتيجة`;
   };
 
-  if (isLoading) {
+  // ✅ عرض التحميل
+  if (isFirstLoad || isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <LoadingSpinner size="lg" text="جاري البحث..." />
@@ -410,7 +392,7 @@ function SearchContent() {
             )}
           </>
         ) : (
-          // حالة عدم وجود نتائج
+          // ✅ حالة عدم وجود نتائج - تظهر فقط بعد انتهاء التحميل
           <div className="text-center py-16">
             <div className="text-gray-400 mb-4">
               <Search className="w-16 h-16 mx-auto" />

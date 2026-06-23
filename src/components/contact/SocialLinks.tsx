@@ -1,8 +1,7 @@
 // components/contact/SocialLinks.tsx
 
 import Link from "next/link";
-import { BsInstagram, BsLinkedin, BsTwitter } from "react-icons/bs";
-import { FaFacebook } from "react-icons/fa";
+import { BsInstagram } from "react-icons/bs";
 import { FaXTwitter } from "react-icons/fa6";
 import { FaFacebookF } from "react-icons/fa";
 import { IoLogoTiktok } from "react-icons/io5";

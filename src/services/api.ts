@@ -874,12 +874,20 @@ export async function loginWithEmail(data: LoginWithEmailRequest): Promise<AuthR
       body: JSON.stringify(data),
     });
 
+     const results: AuthResponse = await response.json();
+    
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+        return {
+        result: results.result || false,
+        errNum: results.errNum || response.status,
+        message: results.message || `فشل في تسجيل الدخول (${response.status})`,
+        data: results.data || null,
+      };
     }
 
-    const result: AuthResponse = await response.json();
-    return result;
+    // const result: AuthResponse = await response;
+    return results;
   } catch (error) {
     console.error('Error in loginWithEmail:', error);
     return {
