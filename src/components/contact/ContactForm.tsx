@@ -73,7 +73,7 @@ export default function ContactForm() {
           name: "",
           email: "",
           phone: "",
-          country_code: "+966",
+          country_code: "+20",
           message: "",
         });
         setTimeout(() => setIsSubmitted(false), 5000);

@@ -227,7 +227,7 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
               required={required}
               placeholder={selectedCountry.placeholder}
               inputMode="numeric"
-              className={`w-full px-4 py-[11px] border rounded-l-xl rounded-r-none focus:outline-none  transition bg-white text-left font-mono text-base
+              className={`w-full px-4 h-full border rounded-l-xl rounded-r-none focus:outline-none  transition bg-white text-left font-mono text-base
                 ${error && isTouched && localPhoneNumber 
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500" 
                   : !error && localPhoneNumber && localPhoneNumber.length === selectedCountry.minLength
