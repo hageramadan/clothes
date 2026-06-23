@@ -104,7 +104,7 @@ function SearchContent() {
   
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFirstLoad, setIsFirstLoad] = useState(true); // ✅ حالة للتحميل الأولي
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
@@ -113,12 +113,10 @@ function SearchContent() {
   
   const perPage = 12;
 
-  // ✅ استخدام ref لمنع التكرار
   const hasLoadedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isSearchChangeRef = useRef(false);
 
-  // ✅ دالة جلب نتائج البحث المحسنة
   const fetchSearchResults = useCallback(async () => {
     if (!query) {
       setProducts([]);
@@ -129,26 +127,24 @@ function SearchContent() {
       return;
     }
 
-    // ✅ إلغاء الطلب السابق
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
     
     abortControllerRef.current = new AbortController();
     
-    // ✅ تعيين حالة التحميل
     setIsLoading(true);
     
     try {
       const result = await searchProducts(query, currentPage, perPage);
       
       if (!abortControllerRef.current?.signal.aborted) {
-        // التعامل مع استجابة الـ API
         if (result.result === true && result.data) {
           const productsData = result.data.products || [];
           const paginationData = result.data.pagination;
           
           console.log(`✅ Found ${productsData.length} products for page ${currentPage}`);
+          console.log(`📊 Pagination:`, paginationData);
           
           setProducts(productsData);
           
@@ -174,7 +170,6 @@ function SearchContent() {
       }
     } finally {
       if (!abortControllerRef.current?.signal.aborted) {
-        // ✅ تأخير إيقاف التحميل قليلاً لمنع الوميض
         setTimeout(() => {
           setIsLoading(false);
           setIsFirstLoad(false);
@@ -183,7 +178,6 @@ function SearchContent() {
     }
   }, [query, currentPage, perPage]);
 
-  // ✅ جلب النتائج عند تحميل الصفحة أو تغيير البحث
   useEffect(() => {
     if (query) {
       setIsFirstLoad(true);
@@ -203,7 +197,6 @@ function SearchContent() {
     };
   }, [query, fetchSearchResults]);
 
-  // ✅ إعادة تعيين الصفحة عند تغيير البحث
   useEffect(() => {
     if (query) {
       isSearchChangeRef.current = true;
@@ -211,14 +204,12 @@ function SearchContent() {
     }
   }, [query]);
 
-  // ✅ تغيير الصفحة
   useEffect(() => {
     if (currentPage > 1 && query) {
       fetchSearchResults();
     }
   }, [currentPage, query, fetchSearchResults]);
 
-  // ✅ إعادة الترتيب عند تغيير خيار الترتيب (فلتر محلي)
   useEffect(() => {
     if (products.length > 0) {
       const sortedProducts = [...products];
@@ -246,6 +237,8 @@ function SearchContent() {
     e.preventDefault();
     if (searchInput.trim()) {
       isSearchChangeRef.current = true;
+      setIsLoading(true);
+      setIsFirstLoad(true);
       router.push(`/search?q=${encodeURIComponent(searchInput.trim())}`);
     }
   };
@@ -257,12 +250,12 @@ function SearchContent() {
   const handlePageChange = (page: number) => {
     console.log(`🔄 Changing to page ${page}`);
     if (page >= 1 && page <= lastPage) {
+      setIsLoading(true);
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  // ✅ عرض معلومات Pagination
   const getPaginationInfo = () => {
     if (totalProducts === 0) return '';
     const from = (currentPage - 1) * perPage + 1;
@@ -270,7 +263,6 @@ function SearchContent() {
     return `عرض ${from} - ${to} من ${totalProducts} نتيجة`;
   };
 
-  // ✅ عرض التحميل
   if (isFirstLoad || isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -303,20 +295,24 @@ function SearchContent() {
             نتائج البحث
           </h1>
           
-          {/* شريط البحث */}
           <form onSubmit={handleSearch} className="relative max-w-2xl">
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="ابحث عن منتجات..."
-              className="w-full px-6 py-3 pr-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EC221F] focus:border-transparent"
+              className="w-full px-6 py-3 pr-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EC221F] focus:border-transparent"
             />
             <button
               type="submit"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#EC221F] transition"
+              disabled={isLoading}
             >
-              <Search className="w-5 h-5" />
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-gray-300 border-t-[#EC221F] rounded-full animate-spin"></div>
+              ) : (
+                <Search className="w-5 h-5" />
+              )}
             </button>
           </form>
         </div>
@@ -327,11 +323,10 @@ function SearchContent() {
             {totalProducts > 0 ? (
               <>تم العثور على <span className="font-bold text-[#EC221F]">{totalProducts}</span> نتيجة لـ `{query}`</>
             ) : (
-              <>لم يتم العثور على نتائج لـ `{query}`</>
+              !isLoading && <>لم يتم العثور على نتائج لـ `{query}`</>
             )}
           </p>
           
-          {/* ترتيب النتائج */}
           <select
             value={sortBy}
             onChange={handleSortChange}
@@ -344,10 +339,19 @@ function SearchContent() {
           </select>
         </div>
 
+        {/* مؤشر تحميل عند تغيير الصفحة */}
+        {isLoading && products.length > 0 && (
+          <div className="flex justify-center py-8">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 border-2 border-gray-300 border-t-[#EC221F] rounded-full animate-spin"></div>
+              <span className="text-gray-500">جاري التحميل...</span>
+            </div>
+          </div>
+        )}
+
         {/* قائمة المنتجات */}
-        {products.length > 0 ? (
+        {!isLoading && products.length > 0 ? (
           <>
-            {/* ✅ عرض معلومات Pagination */}
             <div className="text-sm text-gray-500 mb-4">
               {getPaginationInfo()}
             </div>
@@ -379,7 +383,7 @@ function SearchContent() {
               })}
             </div>
             
-            {/* ✅ استخدام مكون Pagination الموحد */}
+            {/* ✅ الباجينشن */}
             {lastPage > 1 && (
               <div className="mt-12">
                 <Pagination
@@ -392,22 +396,24 @@ function SearchContent() {
             )}
           </>
         ) : (
-          // ✅ حالة عدم وجود نتائج - تظهر فقط بعد انتهاء التحميل
-          <div className="text-center py-16">
-            <div className="text-gray-400 mb-4">
-              <Search className="w-16 h-16 mx-auto" />
+          // حالة عدم وجود نتائج
+          !isLoading && !isFirstLoad && (
+            <div className="text-center py-16">
+              <div className="text-gray-400 mb-4">
+                <Search className="w-16 h-16 mx-auto" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">لا توجد نتائج</h3>
+              <p className="text-gray-500">
+                لم نتمكن من العثور على منتجات مطابقة لـ `{query}`
+              </p>
+              <button
+                onClick={() => router.push("/")}
+                className="mt-4 text-[#EC221F] hover:underline"
+              >
+                العودة إلى الرئيسية
+              </button>
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">لا توجد نتائج</h3>
-            <p className="text-gray-500">
-              لم نتمكن من العثور على منتجات مطابقة لـ `{query}`
-            </p>
-            <button
-              onClick={() => router.push("/")}
-              className="mt-4 text-[#EC221F] hover:underline"
-            >
-              العودة إلى الرئيسية
-            </button>
-          </div>
+          )
         )}
       </div>
     </div>

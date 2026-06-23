@@ -9,7 +9,7 @@ import Pagination from "@/components/products/Pagination";
 import { getAllProducts, getCategories } from "@/services/api";
 import { ProductData } from "@/services/api";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { FilterIcon } from "lucide-react";
+import { VscSettings } from "react-icons/vsc";
 import { X } from "lucide-react";
 import Link from "next/link";
 
@@ -302,7 +302,7 @@ export default function ProductsPage() {
         <div className="flex gap-4">
           <div className="flex-1">
             <div className="rounded-[8px] mb-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex justify-between items-center gap-4">
                 <div className="flex items-end gap-1">
                   <Link href="/" className="text-[#726C6C] text-xl">
                     الرئيسية
@@ -318,15 +318,9 @@ export default function ProductsPage() {
                   onClick={() => {
                     setIsMobileFilterOpen(true);
                   }}
-                  className="md:hidden flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-[8px] hover:bg-gray-200 transition-colors"
+                  className="md:hidden flex items-center gap-2 px-4 py-2 bg-[#EC221F] rounded-[8px] hover:bg-[#eb3b38] transition-colors"
                 >
-                  <FilterIcon className="w-5 h-5" />
-                  <span>فلتر</span>
-                  {activeFiltersCount > 0 && (
-                    <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {activeFiltersCount}
-                    </span>
-                  )}
+                  <VscSettings className="w-6 h-6 text-white" />
                 </button>
               </div>
             </div>
@@ -335,8 +329,6 @@ export default function ProductsPage() {
               <LoadingSpinner size="lg" text="جاري تحميل المنتجات..." />
             ) : products.length > 0 ? (
               <>
-                
-
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                   {products.map((product) => {
                     const cardData = transformProductForCard(product);
@@ -387,26 +379,41 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* نافذة الفلتر المنزلقة من اليمين للموبايل */}
+      {/* ✅ نافذة الفلتر المنزلقة من الأسفل للموبايل - BOTTOM SHEET */}
       <div
         className={`
           fixed inset-0 z-50 md:hidden
           ${isMobileFilterOpen ? "block" : "hidden"}
         `}
       >
+        {/* ✅ الخلفية المعتمة */}
         <div
           className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300"
           onClick={() => setIsMobileFilterOpen(false)}
         />
 
+        {/* ✅ الفلتر يظهر من الأسفل وليس من الجانب */}
         <div
           className={`
-            absolute top-0 right-0 bottom-0 w-full bg-white shadow-xl
+            absolute bottom-0 left-0 right-0 
+            bg-white rounded-t-3xl shadow-2xl
             transition-transform duration-300 ease-out
-            ${isMobileFilterOpen ? "translate-x-0" : "translate-x-full"}
+            ${isMobileFilterOpen ? "translate-y-0" : "translate-y-full"}
           `}
+          style={{
+            maxHeight: "85vh",
+            height: "85vh",
+            display: "flex",
+            flexDirection: "column",
+          }}
         >
-          <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
+          {/* ✅ شريط السحب للأعلى (Drag Handle) */}
+          <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+          </div>
+
+          {/* ✅ رأس الفلتر مع زر الإغلاق */}
+          <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10 rounded-t-3xl">
             <h2 className="text-lg font-bold">تصفية المنتجات</h2>
             <button
               onClick={() => setIsMobileFilterOpen(false)}
@@ -416,7 +423,8 @@ export default function ProductsPage() {
             </button>
           </div>
 
-          <div className="h-[calc(100%-60px)] overflow-y-auto">
+          {/* ✅ محتوى الفلتر - يأخذ باقي المساحة مع تمرير */}
+          <div className="flex-1 overflow-y-auto pb-6">
             <ProductFilters
               onFilterChange={handleFilterChange}
               isMobile={true}

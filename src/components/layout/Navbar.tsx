@@ -524,7 +524,7 @@ export function Navbar() {
               setShowMobileCategoriesDropdown(false);
             }}
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Image src="/images/Menu.png" alt="Menu" className="w-[24px] h-[24px]" width={24} height={24} style={{ filter: isHomePage && !isScrolled ? 'brightness(0) invert(1)' : 'none' }} />}
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Image src="/images/Menu.png" alt="Menu" className="w-[24px] h-[24px]" width={2400} height={2400} style={{ filter: isHomePage && !isScrolled ? 'brightness(0) invert(1)' : 'none' }} />}
           </Button>
         </div>
 
