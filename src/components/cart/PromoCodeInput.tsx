@@ -195,14 +195,14 @@ export function PromoCodeInput({ onApply, onRemove, appliedCode }: PromoCodeInpu
           }}
           placeholder="أدخل كود الخصم..."
           disabled={isLoading}
-          className={`flex-1 px-2 md:px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EC221F] focus:border-transparent text-sm disabled:bg-gray-100 ${
+          className={`px-2 md:px-4 w-[90%] lg:w-full py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EC221F] focus:border-transparent text-sm disabled:bg-gray-100 ${
             error ? 'border-red-500' : 'border-gray-200'
           }`}
         />
         <button
           onClick={handleApply}
           disabled={!code.trim() || isLoading}
-          className="px-3 md:px-5 overflow-hidden md:py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-3 md:px-5 w-fit md:py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           {isLoading ? "جاري.." : "تطبيق"}
