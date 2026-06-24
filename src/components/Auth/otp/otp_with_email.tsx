@@ -116,17 +116,7 @@ export default function OTPWithEmail() {
 
   return (
     <>
-      {/* <Toaster 
-        position="top-center"
-        toastOptions={{
-          style: {
-            fontSize: '14px',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            direction: 'rtl',
-          },
-        }}
-      /> */}
+     
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
           <div className="text-center mb-8">
@@ -143,7 +133,7 @@ export default function OTPWithEmail() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="flex justify-between gap-2 mb-6 flex-row-reverse">
+            <div className="flex justify-between md:gap-2 mb-6 flex-row-reverse">
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -155,7 +145,7 @@ export default function OTPWithEmail() {
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   disabled={isLoading}
-                  className="w-12 h-12 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-[#ff3c27] focus:ring-2 focus:ring-[#ff3c27]/20 outline-none transition-all disabled:opacity-50"
+                  className="w-10 h-10 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-[#ff3c27] focus:ring-2 focus:ring-[#ff3c27]/20 outline-none transition-all disabled:opacity-50"
                   maxLength={1}
                 />
               ))}
