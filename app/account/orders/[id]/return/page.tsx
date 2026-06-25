@@ -42,6 +42,29 @@ interface OrderItem {
   originalPrice?: number;
   images: string[];
   image?: string;
+  variant?: {
+    id: number;
+    sku: string | null;
+    price: number;
+    has_discount: boolean;
+    discount_type: string | null;
+    discount_value: string | null;
+    price_after_discount: number;
+    quantity: number;
+    is_active: boolean;
+    variant_image: string;
+    attributes: Array<{
+      id: number;
+      attribute_type: {
+        id: number;
+        name: string;
+      };
+      value: string;
+      meta: {
+        color?: string;
+      } | null;
+    }>;
+  };
 }
 
 interface OrderDetails {
@@ -63,17 +86,32 @@ const refundMethods = [
     name: "المحفظة الإلكترونية", 
     description: "سيتم إضافة المبلغ إلى محفظتك"
   },
-  // { 
-  //   id: "bank", 
-  //   name: "تحويل بنكي", 
-  //   description: "سيتم تحويل المبلغ إلى حسابك البنكي"
-  // },
-  // { 
-  //   id: "card", 
-  //   name: "نفس بطاقة الدفع", 
-  //   description: "سيتم رد المبلغ إلى نفس البطاقة"
-  // },
 ];
+
+// ========== دوال استخراج المقاس واللون ==========
+
+// جلب المقاس
+const getSize = (item: OrderItem): string | null => {
+  if (!item.variant?.attributes) return null;
+  const sizeAttr = item.variant.attributes.find(
+    (attr) => attr.attribute_type.name === "مقاس"
+  );
+  return sizeAttr?.value || null;
+};
+
+// جلب اللون
+const getColor = (item: OrderItem): { name: string; hex: string | null } | null => {
+  if (!item.variant?.attributes) return null;
+  const colorAttr = item.variant.attributes.find(
+    (attr) => attr.attribute_type.name === "اللون"
+  );
+  if (!colorAttr) return null;
+  
+  return {
+    name: colorAttr.value,
+    hex: colorAttr.meta?.color || null,
+  };
+};
 
 // ========== دالة جلب تفاصيل الطلب ==========
 const fetchOrderDetails = async (orderId: string): Promise<OrderDetails | null> => {
@@ -110,6 +148,7 @@ const fetchOrderDetails = async (orderId: string): Promise<OrderDetails | null> 
           total_price: item.total_price,
           images: item.images || [],
           image: item.images && item.images[0] ? cleanImageUrl(item.images[0]) : "/images/placeholder-product.png",
+          variant: item.variant || null,
         })),
       };
     }
@@ -166,7 +205,7 @@ const submitReturnRequest = async (
 const cleanImageUrl = (url: string): string => {
   if (!url) return "/images/placeholder-product.png";
   if (url.startsWith("/storage")) {
-    return `https://admin.souqkaber.com${url}`;
+    return `https://dukanah.admin.t-carts.com${url}`;
   }
   return url;
 };
@@ -264,7 +303,7 @@ export default function ReturnRequestPage() {
     return (
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
         <div className="container mx-auto px-4 py-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#23A6F0] mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EC221F] mx-auto"></div>
           <p className="text-gray-500 mt-4">جاري تحميل بيانات الطلب...</p>
         </div>
       </div>
@@ -282,7 +321,7 @@ export default function ReturnRequestPage() {
           <p className="text-gray-500 mb-4">عذراً، لا يمكننا العثور على هذا الطلب</p>
           <Link
             href="/account/orders"
-            className="inline-block bg-[#23A6F0] text-white px-6 py-2 rounded-lg"
+            className="inline-block bg-[#000000] text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition"
           >
             العودة إلى الطلبات
           </Link>
@@ -296,11 +335,11 @@ export default function ReturnRequestPage() {
       <div className="container mx-auto mb-3 px-4 md:px-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-          <Link href="/account" className="hover:text-[#23A6F0] transition">حسابي</Link>
+          <Link href="/account" className="hover:text-[#EC221F] transition">حسابي</Link>
           <ChevronRight className="w-4 h-4" />
-          <Link href="/account/orders" className="hover:text-[#23A6F0] transition">طلباتي</Link>
+          <Link href="/account/orders" className="hover:text-[#EC221F] transition">طلباتي</Link>
           <ChevronRight className="w-4 h-4" />
-          <span className="text-[#23A6F0] font-medium">طلب إرجاع</span>
+          <span className="text-[#EC221F] font-medium">طلب إرجاع</span>
         </div>
 
         <div>
@@ -316,7 +355,7 @@ export default function ReturnRequestPage() {
                 <div className="flex items-center gap-1">
                   <p>{order.order_number}</p>
                   <IoCopyOutline 
-                    className="cursor-pointer hover:text-[#23A6F0] transition"
+                    className="cursor-pointer hover:text-[#EC221F] transition"
                     onClick={copyOrderNumber}
                   />
                 </div>
@@ -326,7 +365,7 @@ export default function ReturnRequestPage() {
               </div>
             </div>
 
-            {/* المنتجات */}
+            {/* المنتجات مع عرض اللون والمقاس */}
             <div>
               <p className="text-gray-600 mb-3">
                 المنتجات ({order.items.length})
@@ -334,12 +373,16 @@ export default function ReturnRequestPage() {
               {order.items.map((item, idx) => {
                 const productImage = item.image || (item.images && item.images[0] ? cleanImageUrl(item.images[0]) : "/images/placeholder-product.png");
                 
+                // ✅ استخراج المقاس واللون
+                const size = getSize(item);
+                const color = getColor(item);
+                
                 return (
                   <div
                     key={idx}
                     className="flex items-center gap-4 border border-gray-200 rounded-xl p-3 mb-3"
                   >
-                    <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden">
+                    <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
                       <Image
                         src={productImage}
                         alt={item.title || item.name || "منتج"}
@@ -355,6 +398,32 @@ export default function ReturnRequestPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-bold text-gray-800">{item.title || item.name}</p>
+                          
+                          {/* ✅ عرض الخصائص (المقاس واللون) */}
+                          <div className="flex flex-wrap gap-2 mt-1.5">
+                            {/* عرض المقاس */}
+                            {size && (
+                              <span className="inline-flex items-center gap-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
+                                <span className="font-medium">المقاس:</span>
+                                <span>{size}</span>
+                              </span>
+                            )}
+                            
+                            {/* عرض اللون */}
+                            {color && (
+                              <span className="inline-flex items-center gap-1.5 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
+                                <span className="font-medium">اللون:</span>
+                                <span>{color.name}</span>
+                                {color.hex && (
+                                  <span 
+                                    className="w-3 h-3 rounded-full border border-gray-300 inline-block"
+                                    style={{ backgroundColor: color.hex }}
+                                  />
+                                )}
+                              </span>
+                            )}
+                          </div>
+                          
                           <p className="text-xs text-gray-600 mt-1">
                             الكمية: x{item.quantity}
                           </p>
@@ -381,7 +450,7 @@ export default function ReturnRequestPage() {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="قم بإدخال ملاحظاتك الإضافية.."
-              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#23A6F0] resize-none"
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#EC221F] resize-none"
               rows={3}
             />
           </div>
@@ -397,7 +466,7 @@ export default function ReturnRequestPage() {
                   key={method.id}
                   className={`flex items-start gap-4 p-4 border-2 rounded-xl cursor-pointer transition ${
                     refundMethod === method.id
-                      ? "border-[#23A6F0] bg-red-50"
+                      ? "border-[#EC221F] bg-red-50"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
@@ -407,7 +476,7 @@ export default function ReturnRequestPage() {
                     value={method.id}
                     checked={refundMethod === method.id}
                     onChange={(e) => setRefundMethod(e.target.value)}
-                    className="mt-1 w-4 h-4 text-[#23A6F0] focus:ring-[#23A6F0]"
+                    className="mt-1 w-4 h-4 text-[#EC221F] focus:ring-[#EC221F]"
                   />
                   <div className="flex-1">
                     <p className="font-bold text-gray-800">{method.name}</p>
@@ -451,7 +520,7 @@ export default function ReturnRequestPage() {
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">تم تقديم طلب الإرجاع بنجاح</h3>
             <p className="text-gray-500 mb-6">
-              رقم الطلب: <span className="font-bold text-[#23A6F0]">{order.order_number}</span>
+              رقم الطلب: <span className="font-bold text-[#EC221F]">{order.order_number}</span>
               <br />
               سيتم معالجة طلبك والتواصل معك قريباً
             </p>
