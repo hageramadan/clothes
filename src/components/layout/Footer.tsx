@@ -6,27 +6,32 @@ import { PiLineVerticalThin } from "react-icons/pi";
 import { ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { getCategories } from "@/services/api";
+import { useSettings } from "@/hooks/useSettings";
 
 export function Footer() {
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
-
   const [footerCategories, setFooterCategories] = useState<
     { id: number; name: string }[]
   >([]);
-
   const categoriesRef = useRef<HTMLDivElement>(null);
+
+  // استخدام Hook الإعدادات
+  const { settings, loading: settingsLoading } = useSettings();
 
   // Fetch categories from API
   useEffect(() => {
     const fetchCategories = async () => {
-      const categories = await getCategories();
-
-      setFooterCategories(
-        categories.map((category) => ({
-          id: category.id,
-          name: category.name,
-        }))
-      );
+      try {
+        const categories = await getCategories();
+        setFooterCategories(
+          categories.map((category) => ({
+            id: category.id,
+            name: category.name,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
     };
 
     fetchCategories();
@@ -60,21 +65,88 @@ export function Footer() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [showCategoriesDropdown]);
 
+  // بناء روابط التواصل الاجتماعي للفوتر - مع الصور
+  const getSocialLinks = () => {
+    if (!settings) return [];
+    
+    const links = [];
+    
+    // انستجرام
+    if (settings.instagram) {
+      links.push({ 
+        href: settings.instagram, 
+        label: "Instagram",
+        imagePath: "/images/social/insta.png"
+      });
+    }
+    
+    // فيسبوك
+    if (settings.facebook) {
+      links.push({ 
+        href: settings.facebook, 
+        label: "Facebook",
+        imagePath: "/images/social/face.png"
+      });
+    }
+    
+    // واتساب
+    if (settings.whatsapp) {
+      const whatsappUrl = settings.whatsapp.startsWith('https://') 
+        ? settings.whatsapp 
+        : `https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}`;
+      links.push({ 
+        href: whatsappUrl, 
+        label: "WhatsApp",
+        imagePath: "/images/social/wats.png"
+      });
+    }
+
+    // تويتر (X)
+    if (settings.twitter) {
+      links.push({ 
+        href: settings.twitter, 
+        label: "Twitter",
+        imagePath: "/images/social/x.png"
+      });
+    }
+
+    // سناب شات
+    if (settings.snapchat) {
+      links.push({ 
+        href: settings.snapchat, 
+        label: "Snapchat",
+        imagePath: "/images/social/snap.png"
+      });
+    }
+
+    // لينكد إن
+    if (settings.linkedin) {
+      links.push({ 
+        href: settings.linkedin, 
+        label: "LinkedIn",
+        imagePath: "/images/social/linkedin.png"
+      });
+    }
+
+    return links;
+  };
+
+  const socialLinks = getSocialLinks();
+
   return (
     <footer className="border-t mt-auto bg-[#141718] text-white pt-6 md:pt-10">
       <div className="container mx-auto px-4 py-4 md:py-8">
         {/* القسم العلوي */}
         <div className="flex flex-wrap md:flex-row flex-col items-center justify-center md:justify-between gap-8 mb-8">
-          
           {/* اللوجو */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <h1 className="text-[#FFFFFF] text-xl md:text-2xl font-bold">
-                LoGo
+                {settingsLoading ? "جاري التحميل..." : settings?.name || "LoGo"}
               </h1>
               <PiLineVerticalThin className="w-6 h-8 text-[#E8ECEF]" />
               <p className="text-white/70 text-sm leading-relaxed">
-                متجرك المثالي هنا كل ما تريد
+                {settingsLoading ? "..." : settings?.address || "متجرك المثالي هنا كل ما تريد"}
               </p>
             </div>
           </div>
@@ -107,7 +179,7 @@ export function Footer() {
 
               {showCategoriesDropdown && (
                 <div
-                  className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-[8px]  border shadow-xl z-50"
+                  className="absolute bottom-full right-0 mb-2 w-36 lg:w-48 bg-white rounded-[8px] border shadow-xl z-50"
                   onMouseLeave={() => setShowCategoriesDropdown(false)}
                 >
                   <div className="absolute -bottom-1.5 right-4 w-3 h-3 rotate-45 bg-white border-r border-b"></div>
@@ -147,46 +219,45 @@ export function Footer() {
         {/* footer bottom */}
         <div className="border-t border-white/20 pt-6 md:pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            
             <p className="text-white/60 font-bold text-sm">
-              © جميع الحقوق محفوظة | 2025
+              © جميع الحقوق محفوظة | {new Date().getFullYear()}
             </p>
 
             <div className="flex gap-6">
-              <Link href="/terms" className="hover:text-[#EC221F] text-white">
+              <Link 
+                href={settings?.terms_and_conditions ? "/terms" : "#"} 
+                className="hover:text-[#EC221F] text-white"
+              >
                 الشروط والأحكام
               </Link>
-              <Link href="/privacy" className="hover:text-[#EC221F] text-white">
+              <Link 
+                href={settings?.privacy_policy ? "/privacy" : "#"} 
+                className="hover:text-[#EC221F] text-white"
+              >
                 سياسة الخصوصية
               </Link>
             </div>
 
-            {/* social */}
+            {/* social - استخدام الصور بدلاً من الأيقونات */}
             <div className="flex gap-4">
-              <Link href="https://www.instagram.com/tcarstofficial/">
-                <Image
-                  src="/images/social/insta.png"
-                  alt="Instagram"
-                  width={26}
-                  height={26}
-                />
-              </Link>
-              <Link href="https://www.facebook.com/tcarstofficial/">
-                <Image
-                  src="/images/social/face.png"
-                  alt="Facebook"
-                  width={26}
-                  height={26}
-                />
-              </Link>
-              <Link href="https://wa.me/201055099236">
-                <Image
-                  src="/images/social/wats.png"
-                  alt="WhatsApp"
-                  width={26}
-                  height={26}
-                />
-              </Link>
+              {socialLinks.map((social, index) => (
+                <Link
+                  key={index}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-80 transition-opacity hover:scale-110 transform duration-200"
+                  aria-label={social.label}
+                >
+                  <Image
+                    src={social.imagePath}
+                    alt={social.label}
+                    width={26}
+                    height={26}
+                    className="w-[26px] h-[26px] object-contain"
+                  />
+                </Link>
+              ))}
             </div>
           </div>
         </div>

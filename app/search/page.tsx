@@ -92,7 +92,7 @@ const transformProductForCard = (product: any) => {
     colors: colors,
     rating: product.avg_rating || 0,
     reviewsCount: product.total_reviews || 0,
-    isBestSeller: (product.avg_rating || 0) >= 4.5,
+    isBestSeller: product.is_active,
   };
 };
 

@@ -161,7 +161,7 @@ export const transformFavoriteToProductCard = (favorite: FavoriteProduct | null 
     href: `/product/${favorite.id}`,
     rating: favorite.avg_rating || 0,
     reviewsCount: favorite.total_reviews || 0,
-    isBestSeller: (favorite.avg_rating || 0) >= 4.5,
+    isBestSeller: favorite.is_active,
     colors: colors,
     addedDate: new Date().toISOString(),
   };

@@ -268,7 +268,7 @@ export default function ProductsPage() {
       colors: colors,
       rating: product.avg_rating || 0,
       reviewsCount: product.total_reviews || 0,
-      isBestSeller: (product.avg_rating || 0) >= 4.5,
+      isBestSeller: product.is_active,
     };
   };
 
@@ -326,7 +326,7 @@ export default function ProductsPage() {
             </div>
 
             {loading ? (
-              <LoadingSpinner size="lg" text="جاري تحميل المنتجات..." />
+              <LoadingSpinner size="lg" text="" />
             ) : products.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">

@@ -185,7 +185,7 @@ export function ProductCard({
           {isBestSeller && (
             <div className="absolute top-2 right-2 z-10">
               <p className="text-[9px] sm:text-xs font-bold text-white bg-[#EC221F] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
-                الاكثر مبيعا
+                الاكثر طلبا
               </p>
             </div>
           )}
@@ -230,7 +230,7 @@ export function ProductCard({
           <div className="flex items-center gap-2 mb-2">
             {originalPrice && originalPrice > price ? (
               <>
-                <span className="text-sm sm:text-base font-semibold text-[#23856D]">
+                <span className="text-sm sm:text-base font-semibold ">
                   {price.toLocaleString()} <span className="text-[10px] sm:text-xs font-semibold">EGP</span>
                 </span>
                 <span className="text-xs sm:text-sm line-through text-gray-400">

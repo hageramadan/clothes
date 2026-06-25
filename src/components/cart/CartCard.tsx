@@ -500,7 +500,7 @@ const ActionButtonsMobile = ({
   isMutating: boolean;
   onRemove: () => void;
 }) => (
-  <div className="flex flex-col items-end gap-1.5">
+  <div className="flex  items-end gap-1.5">
     <button
       onClick={onToggleFavorite}
       disabled={isMutating}

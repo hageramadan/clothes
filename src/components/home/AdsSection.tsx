@@ -12,7 +12,7 @@ const extractDiscount = (text: string): number | null => {
   return match ? parseInt(match[1]) : null;
 };
 
-// حساب الوقت المتبقي (هنا نستخدم تاريخ انتهاء افتراضي، يمكن تعديله حسب الـ API)
+// حساب الوقت المتبقي من تاريخ الانتهاء
 const calculateTimeLeft = (endDate?: string) => {
   if (endDate) {
     const end = new Date(endDate).getTime();
@@ -55,7 +55,8 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
   
   const isMounted = useRef(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
- // بيانات افتراضية
+  
+  // بيانات افتراضية
   const getDefaultAds = (): AdData[] => {
     return [
       {
@@ -67,7 +68,8 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
         image: "/images/sale.png",
         is_active: 1,
         created_at: "",
-        updated_at: ""
+        updated_at: "",
+        end_date: "2026-07-11" // إضافة تاريخ انتهاء افتراضي
       },
       {
         id: 2,
@@ -78,10 +80,12 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
         image: "/images/sale1.png",
         is_active: 1,
         created_at: "",
-        updated_at: ""
+        updated_at: "",
+        end_date: "2026-07-11" // إضافة تاريخ انتهاء افتراضي
       }
     ];
   };
+
   // جلب الإعلانات من API
   const fetchAds = useCallback(async () => {
     try {
@@ -108,8 +112,6 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
     }
   }, []);
 
- 
-
   useEffect(() => {
     isMounted.current = true;
     const timeoutId = setTimeout(() => {
@@ -125,10 +127,36 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
     };
   }, [fetchAds]);
 
-  // تشغيل المؤقت
+  // تحديث المؤقت عند تغيير الإعلانات أو تاريخ الانتهاء
   useEffect(() => {
+    // اختيار الإعلان المناسب حسب الـ variant
+    const currentAd = ads[variant === 'dark' ? 0 : 1];
+    
+    // حساب الوقت المتبقي بناءً على تاريخ الانتهاء من الإعلان
+    const newTimeLeft = calculateTimeLeft(currentAd?.end_date);
+    setTimeLeft(newTimeLeft);
+
+    // تنظيف المؤقت القديم
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    // تشغيل المؤقت الجديد
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
+        // إعادة حساب الوقت المتبقي من تاريخ الانتهاء الحقيقي
+        const currentAd = ads[variant === 'dark' ? 0 : 1];
+        if (currentAd?.end_date) {
+          const newTime = calculateTimeLeft(currentAd.end_date);
+          // التحقق من انتهاء الوقت
+          if (newTime.days === 0 && newTime.hours === 0 && newTime.minutes === 0 && newTime.seconds === 0) {
+            clearInterval(timerRef.current!);
+            return newTime;
+          }
+          return newTime;
+        }
+        
+        // منطق العد التنازلي اليدوي (كحل احتياطي)
         if (prev.seconds > 0) {
           return { ...prev, seconds: prev.seconds - 1 };
         } else if (prev.minutes > 0) {
@@ -147,7 +175,7 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
         clearInterval(timerRef.current);
       }
     };
-  }, []);
+  }, [ads, variant]);
 
   const formatNumber = (num: number) => String(num).padStart(2, '0');
 
@@ -197,7 +225,7 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
             {/* Countdown Timer */}
             <div className="mt-1 md:mt-4">
               <p className="text-[6px] text-center md:text-right md:text-base text-gray-300 mb-1 md:mb-3">سينتهي الخصم خلال</p>
-              <div className="flex justify-center md:justify-start gap-1.5 md:gap-5">
+              <div className="flex justify-center md:justify-end gap-1.5 md:gap-5" dir='ltr'>
                 <div className="text-center">
                   <div className="bg-white text-[#191C1F] rounded-[8px]  px-1 py-0.5 md:px-4 md:py-2 min-w-[35px] md:min-w-[70px]">
                     <span className="text-[10px] md:text-3xl font-bold">{formatNumber(timeLeft.days)}</span>

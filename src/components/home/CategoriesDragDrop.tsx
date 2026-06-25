@@ -138,9 +138,9 @@ export function CategoriesDragDrop() {
                 <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-gray-200 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-10 h-10 md:w-12 md:h-12 border-4 border-[#EC221F] border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p className="text-gray-500 text-xs md:text-sm animate-pulse">
+              {/* <p className="text-gray-500 text-xs md:text-sm animate-pulse">
                 جاري تحميل التصنيفات...
-              </p>
+              </p> */}
             </div>
           </div>
         </div>

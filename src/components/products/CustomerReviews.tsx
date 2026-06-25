@@ -177,7 +177,7 @@ export function CustomerReviews({ productId }: CustomerReviewsProps) {
           <div className="flex justify-center items-center py-12">
             <div className="text-center">
               <div className="w-12 h-12 border-4 border-[#EC221F] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-500">جاري تحميل التقييمات...</p>
+              {/* <p className="text-gray-500">جاري تحميل التقييمات...</p> */}
             </div>
           </div>
         </div>
@@ -201,7 +201,8 @@ export function CustomerReviews({ productId }: CustomerReviewsProps) {
           
           <div className="flex gap-3 items-center">
             {/* خيارات الترتيب */}
-            <Select value={sortBy} onValueChange={handleSortChange}>
+            {reviews.length>0 &&(
+              <Select value={sortBy} onValueChange={handleSortChange}>
               <SelectTrigger className="h-12 bg-[#F0F0F0] rounded-full focus:ring-[#EC221F] focus:ring-offset-0">
                 <SelectValue placeholder="ترتيب حسب" />
               </SelectTrigger>
@@ -219,6 +220,7 @@ export function CustomerReviews({ productId }: CustomerReviewsProps) {
                 ))}
               </SelectContent>
             </Select>
+            )}
 
             <button className="bg-black text-white rounded-full px-6 py-2.5 text-sm font-bold hover:bg-gray-800 transition-all duration-300">
               أضف تقييمًا

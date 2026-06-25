@@ -473,7 +473,7 @@ export default function AddAddress({
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-2xl p-8 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل المحافظات...</p>
+          {/* <p className="mt-4 text-gray-600">  ...</p> */}
         </div>
       </div>
     );

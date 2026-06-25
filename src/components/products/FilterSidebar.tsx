@@ -14,6 +14,7 @@ import { getCategories, getColors, getSizes, getBrands } from '@/services/api';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { FaArrowLeft } from 'react-icons/fa6';
+import { useSearchParams } from 'next/navigation';
 
 // ============================================================================
 // Types
@@ -21,6 +22,13 @@ import { FaArrowLeft } from 'react-icons/fa6';
 
 /** A single product category returned by the API */
 export interface CategoryOption {
+  id: number;
+  name: string;
+  subcategories: SubcategoryOption[]; // ✅ إضافة الـ subcategories جوة الكاتجوري
+}
+
+/** A single subcategory returned by the API */
+export interface SubcategoryOption {
   id: number;
   name: string;
 }
@@ -47,6 +55,7 @@ export interface BrandOption {
 /** Shape of the filters object emitted to the parent via onFilterChange. */
 export interface AppliedFilters {
   categoryIds?: number[];
+  subcategoryIds?: number[];
   colors?: string[];
   sizes?: string[];
   brands?: number[];
@@ -70,7 +79,8 @@ type PriceRange = [number, number];
 
 /** Internal selection state managed by the reducer. */
 interface FiltersSelectionState {
-  selectedCategories: number[];
+  selectedCategories: number[]; // ✅ إضافة selectedCategories
+  selectedSubcategories: number[];
   selectedColors: string[];
   selectedSizes: string[];
   selectedBrands: number[];
@@ -93,6 +103,7 @@ const WHITE_COLOR_NAMES = new Set(['أبيض', 'white']);
 
 const initialFiltersState: FiltersSelectionState = {
   selectedCategories: [],
+  selectedSubcategories: [],
   selectedColors: [],
   selectedSizes: [],
   selectedBrands: [],
@@ -120,6 +131,7 @@ function isWhiteColor(name: string, code: string): boolean {
 function buildAppliedFilters(state: FiltersSelectionState): AppliedFilters {
   const filters: AppliedFilters = {
     categoryIds: state.selectedCategories.length ? state.selectedCategories : undefined,
+    subcategoryIds: state.selectedSubcategories.length ? state.selectedSubcategories : undefined,
     colors: state.selectedColors.length ? state.selectedColors : undefined,
     sizes: state.selectedSizes.length ? state.selectedSizes : undefined,
     brands: state.selectedBrands.length ? state.selectedBrands : undefined,
@@ -139,18 +151,27 @@ function buildAppliedFilters(state: FiltersSelectionState): AppliedFilters {
 
 type FiltersAction =
   | { type: 'TOGGLE_CATEGORY'; payload: number }
+  | { type: 'TOGGLE_SUBCATEGORY'; payload: number }
   | { type: 'TOGGLE_COLOR'; payload: string }
   | { type: 'TOGGLE_SIZE'; payload: string }
   | { type: 'TOGGLE_BRAND'; payload: number }
   | { type: 'SET_TEMP_PRICE_RANGE'; payload: PriceRange }
   | { type: 'APPLY_PRICE_FILTER' }
   | { type: 'RESET_ALL' }
-  | { type: 'APPLY_ALL_FILTERS' }; // ✅ إضافة نوع جديد لتطبيق كل الفلاتر دفعة واحدة
+  | { type: 'APPLY_ALL_FILTERS' }
+  | { type: 'SET_INITIAL_CATEGORY'; payload: number }; // ✅ إضافة نوع جديد
 
 function filtersReducer(state: FiltersSelectionState, action: FiltersAction): FiltersSelectionState {
   switch (action.type) {
     case 'TOGGLE_CATEGORY':
-      return { ...state, selectedCategories: toggleInArray(state.selectedCategories, action.payload) };
+      // ✅ عند تغيير الكاتجوري، نمسح الـ subcategories المختارة
+      return { 
+        ...state, 
+        selectedCategories: toggleInArray(state.selectedCategories, action.payload),
+        selectedSubcategories: [] // ✅ تفريغ الـ subcategories
+      };
+    case 'TOGGLE_SUBCATEGORY':
+      return { ...state, selectedSubcategories: toggleInArray(state.selectedSubcategories, action.payload) };
     case 'TOGGLE_COLOR':
       return { ...state, selectedColors: toggleInArray(state.selectedColors, action.payload) };
     case 'TOGGLE_SIZE':
@@ -162,10 +183,15 @@ function filtersReducer(state: FiltersSelectionState, action: FiltersAction): Fi
     case 'APPLY_PRICE_FILTER':
       return { ...state, appliedPriceRange: state.tempPriceRange };
     case 'APPLY_ALL_FILTERS':
-      // ✅ تطبيق كل الفلاتر دفعة واحدة
       return { 
         ...state, 
         appliedPriceRange: state.tempPriceRange 
+      };
+    case 'SET_INITIAL_CATEGORY':
+      return { 
+        ...state, 
+        selectedCategories: [action.payload],
+        selectedSubcategories: [] // ✅ تفريغ الـ subcategories
       };
     case 'RESET_ALL':
       return initialFiltersState;
@@ -200,15 +226,27 @@ function useFilterOptions(): FilterOptionsState {
 
     (async () => {
       try {
-        const [categories, colors, sizes, brands] = await Promise.all([
+        const [categoriesData, colors, sizes, brands] = await Promise.all([
           getCategories(),
           getColors(),
           getSizes(),
           getBrands(),
         ]);
 
+        // ✅ تحويل البيانات لشكل مناسب مع subcategories
+        const formattedCategories: CategoryOption[] = categoriesData.map((cat: any) => ({
+          id: cat.id,
+          name: cat.name,
+          subcategories: cat.subcategories || [],
+        }));
+
         if (isMounted) {
-          setOptions({ categories, colors, sizes, brands });
+          setOptions({ 
+            categories: formattedCategories,
+            colors, 
+            sizes, 
+            brands 
+          });
         }
       } catch (error) {
         console.error('Error loading filters data:', error);
@@ -231,7 +269,7 @@ function FilterSection({ title, children, defaultOpen = true }: FilterSectionPro
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="py-4">
+    <div className="py-4 border-b border-gray-100 last:border-b-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex justify-between items-center w-full text-right font-semibold text-gray-700 mb-2"
@@ -342,31 +380,64 @@ const ColorSwatchList = memo(function ColorSwatchList({
 // ============================================================================
 
 export default function ProductFilters({ onFilterChange, isMobile = false, onClose }: ProductFiltersProps) {
+  const searchParams = useSearchParams();
   const [state, dispatch] = useReducer(filtersReducer, initialFiltersState);
   const { categories, colors, sizes, brands } = useFilterOptions();
 
+  // ✅ جلب الكاتجوري من الـ URL
+  const urlCategoryIds = useMemo(() => {
+    const categoriesParam = searchParams.get('categories');
+    if (categoriesParam) {
+      try {
+        // الـ URL بيجي كـ "categories=[14]" أو "categories=14"
+        const cleaned = categoriesParam.replace(/[\[\]]/g, '');
+        const ids = cleaned.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+        return ids;
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }, [searchParams]);
+
+  // ✅ تعيين الكاتجوري الافتراضي من الـ URL
+  useEffect(() => {
+    if (urlCategoryIds.length > 0) {
+      const categoryId = urlCategoryIds[0];
+      dispatch({ type: 'SET_INITIAL_CATEGORY', payload: categoryId });
+    }
+  }, [urlCategoryIds]);
+
+  // ✅ الحصول على الـ subcategories للكاتجوري المختار
+  const getSubcategoriesForSelectedCategory = useCallback(() => {
+    if (state.selectedCategories.length === 0) return [];
+    
+    const selectedCategory = categories.find(
+      cat => cat.id === state.selectedCategories[0]
+    );
+    
+    return selectedCategory?.subcategories || [];
+  }, [state.selectedCategories, categories]);
+
+  const currentSubcategories = getSubcategoriesForSelectedCategory();
+
   const [tempMinPrice, tempMaxPrice] = state.tempPriceRange;
 
-  // ✅ في الموبايل: لا نطبق الفلاتر تلقائياً، ننتظر زر التطبيق
-  // في الديسكتوب: نطبق الفلاتر فوراً
   const appliedFilters = useMemo<AppliedFilters>(
     () => buildAppliedFilters(state),
-    [state.selectedCategories, state.selectedColors, state.selectedSizes, state.selectedBrands, state.appliedPriceRange],
+    [state.selectedCategories, state.selectedSubcategories, state.selectedColors, state.selectedSizes, state.selectedBrands, state.appliedPriceRange],
   );
 
   // ✅ دالة تطبيق الفلاتر (تُستخدم للموبايل والديسكتوب)
   const applyFilters = useCallback(() => {
-    // تطبيق الفلاتر الحالية
     dispatch({ type: 'APPLY_ALL_FILTERS' });
     
-    // إرسال الفلاتر إلى المكون الأب
     const filtersToApply = buildAppliedFilters({
       ...state,
       appliedPriceRange: state.tempPriceRange,
     });
     onFilterChange(filtersToApply);
     
-    // إغلاق الفلتر إذا كان في الموبايل
     if (isMobile && onClose) {
       onClose();
     }
@@ -375,7 +446,6 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
   // ✅ للديسكتوب: تطبيق الفلاتر فوراً عند التغيير
   useEffect(() => {
     if (!isMobile) {
-      // في الديسكتوب نطبق الفلاتر فوراً
       const filters = buildAppliedFilters({
         ...state,
         appliedPriceRange: state.tempPriceRange,
@@ -385,6 +455,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     state.selectedCategories,
+    state.selectedSubcategories,
     state.selectedColors,
     state.selectedSizes,
     state.selectedBrands,
@@ -395,6 +466,10 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
   // ---- Instant filter toggles ----
   const handleCategoryToggle = useCallback((id: number) => {
     dispatch({ type: 'TOGGLE_CATEGORY', payload: id });
+  }, []);
+
+  const handleSubcategoryToggle = useCallback((id: number) => {
+    dispatch({ type: 'TOGGLE_SUBCATEGORY', payload: id });
   }, []);
 
   const handleColorToggle = useCallback((code: string) => {
@@ -428,7 +503,6 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     }
   };
 
-  // ✅ تطبيق فلتر السعر فقط (للديسكتوب)
   const handleApplyPriceFilter = useCallback(() => {
     if (!isMobile) {
       dispatch({ type: 'APPLY_PRICE_FILTER' });
@@ -437,7 +511,6 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
 
   const handleResetFilters = useCallback(() => {
     dispatch({ type: 'RESET_ALL' });
-    // إرسال الفلاتر الفارغة إلى المكون الأب
     onFilterChange({});
     if (onClose && isMobile) onClose();
   }, [onFilterChange, onClose, isMobile]);
@@ -446,12 +519,20 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
   const getSelectedFiltersCount = useCallback(() => {
     let count = 0;
     if (state.selectedCategories.length) count += state.selectedCategories.length;
+    if (state.selectedSubcategories.length) count += state.selectedSubcategories.length;
     if (state.selectedColors.length) count += state.selectedColors.length;
     if (state.selectedSizes.length) count += state.selectedSizes.length;
     if (state.selectedBrands.length) count += state.selectedBrands.length;
     if (state.tempPriceRange[0] > MIN_PRICE || state.tempPriceRange[1] < MAX_PRICE) count++;
     return count;
   }, [state]);
+
+  // ✅ تحديد الكاتجوري المختار
+  const selectedCategoryName = useMemo(() => {
+    if (state.selectedCategories.length === 0) return null;
+    const cat = categories.find(c => c.id === state.selectedCategories[0]);
+    return cat?.name || null;
+  }, [state.selectedCategories, categories]);
 
   return (
     <div
@@ -513,12 +594,11 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
                 className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            {/* ✅ إخفاء زر تطبيق السعر في الموبايل لأنه سيتم تطبيق كل الفلاتر دفعة واحدة */}
             {!isMobile && (
               <div className="mt-4">
                 <button
                   onClick={handleApplyPriceFilter}
-                  className="w-[32.89px] bg-[#0A0500] text-white py-2 transition-colors font-semibold flex items-center justify-center gap-2"
+                  className="w-[32.89px] rounded-[7px] bg-[#0A0500] text-white py-2 transition-colors font-semibold flex items-center justify-center gap-2"
                 >
                   <FaArrowLeft className="w-5 h-5" />
                 </button>
@@ -528,8 +608,8 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
         </div>
       </FilterSection>
 
-      {/* ===== فلتر الفئات ===== */}
-      <FilterSection title="الفئات">
+      {/* ===== فلتر الكاتجوريز ===== */}
+      <FilterSection title="الفئات الرئيسية">
         <CheckboxFilterList
           items={categories}
           selectedValues={state.selectedCategories}
@@ -540,6 +620,28 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
           maxHeightClassName="max-h-64"
         />
       </FilterSection>
+
+      {/* ===== فلتر الـ subcategories (يظهر فقط لو في كاتجوري مختار) ===== */}
+      {state.selectedCategories.length > 0 && currentSubcategories.length > 0 && (
+        <FilterSection 
+          title={selectedCategoryName ? `الفئات الفرعية - ${selectedCategoryName}` : "الفئات الفرعية"}
+          defaultOpen={true}
+        >
+          {currentSubcategories.length > 0 ? (
+            <CheckboxFilterList
+              items={currentSubcategories}
+              selectedValues={state.selectedSubcategories}
+              getKey={(subcategory) => subcategory.id}
+              getLabel={(subcategory) => subcategory.name}
+              onToggle={handleSubcategoryToggle}
+              loadingMessage="جاري تحميل الفئات الفرعية..."
+              maxHeightClassName="max-h-64"
+            />
+          ) : (
+            <p className="text-sm text-gray-400">لا توجد فئات فرعية لهذا القسم</p>
+          )}
+        </FilterSection>
+      )}
 
       {/* ===== فلتر الألوان ===== */}
       <FilterSection title="الألوان">
@@ -585,11 +687,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
             className="w-full bg-[#EC221F] text-white py-3 rounded-[8px] font-semibold text-base transition-colors hover:bg-[#e0201c] flex items-center justify-center gap-2"
           >
             تطبيق 
-            {/* {getSelectedFiltersCount() > 0 && (
-              <span className="bg-white text-[#2D93CA] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                {getSelectedFiltersCount()}
-              </span>
-            )} */}
+          
           </button>
         </div>
       )}

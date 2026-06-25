@@ -100,7 +100,7 @@ export default function ContactInfoForm({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm mb-5">
       <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-        <span className="text-[#EC221F]">👤</span>
+        
         معلومات الاتصال
       </h2>
       

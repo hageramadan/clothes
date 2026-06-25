@@ -211,7 +211,7 @@ export default function WishlistPage() {
                 <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#EC221F] border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p className="text-gray-500 text-sm animate-pulse">جاري تحميل المفضلة...</p>
+              {/* <p className="text-gray-500 text-sm animate-pulse">جاري تحميل المفضلة...</p> */}
             </div>
           </div>
         </div>
@@ -227,7 +227,7 @@ export default function WishlistPage() {
   // ========== عرض المنتجات ==========
   return (
     <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b]">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 py-2">
+      <div className="container mx-auto">
         {/* ✅ استخدام PageHeader */}
         <PageHeader title="قائمة المفضلة" />
 

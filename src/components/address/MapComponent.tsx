@@ -109,7 +109,7 @@ export default function MapComponent({ onLocationSelect, initialLocation }: Loca
       <div className="bg-gray-100 rounded-[8px]  h-80 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-          <p className="text-gray-600">جاري تحميل الخريطة...</p>
+          {/* <p className="text-gray-600">جاري تحميل الخريطة...</p> */}
         </div>
       </div>
     );

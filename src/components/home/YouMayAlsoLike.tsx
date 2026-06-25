@@ -116,7 +116,7 @@ const transformProduct = (product: ProductData): Product => {
     colors: colors,
     rating: product.avg_rating || 0,
     reviewsCount: product.total_reviews || 0,
-    // isBestSeller:,
+    isBestSeller:product.is_active,
   };
 };
 
@@ -252,9 +252,9 @@ export function YouMayAlsoLike() {
                 <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#EC221F] border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p className="text-gray-500 text-sm animate-pulse">
+              {/* <p className="text-gray-500 text-sm animate-pulse">
                 جاري تحميل المنتجات...
-              </p>
+              </p> */}
             </div>
           </div>
         </div>

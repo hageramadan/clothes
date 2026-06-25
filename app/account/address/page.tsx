@@ -102,7 +102,7 @@ export default function AddressPage() {
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل العناوين...</p>
+          {/* <p className="mt-4 text-gray-600">جاري تحميل العناوين...</p> */}
         </div>
       </div>
     );

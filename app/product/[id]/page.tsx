@@ -65,6 +65,8 @@ const transformProductData = (apiProduct: ProductData) => {
     // ✅ إضافة variants و has_variants (الأهم)
     variants: apiProduct.variants || [],
     has_variants: apiProduct.has_variants || false,
+       isBestSeller: apiProduct.is_active,
+    is_active: apiProduct.is_active,
   };
 };
 
@@ -112,7 +114,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   if (loading) {
     return (
       <div className="min-h-screen page-with-padding flex items-center justify-center">
-        <LoadingSpinner size="lg" text="جاري تحميل المنتج..." />
+        <LoadingSpinner size="lg" text="" />
       </div>
     );
   }

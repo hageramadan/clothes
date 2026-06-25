@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+
 import { ProductCard } from "../products/ProductCard";
 import { Button } from "../ui/button";
 import { getNewProducts, ProductData } from "@/services/api";
@@ -121,7 +121,7 @@ const transformProduct = (product: ProductData): Product => {
     colors: colors,
     rating: product.avg_rating || 0,
     reviewsCount: product.total_reviews || 0,
-    isBestSeller: (product.avg_rating || 0) >= 4.5,
+    isBestSeller: product.is_active,
   };
 };
 
@@ -223,9 +223,7 @@ export function LatestProducts() {
                 <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#EC221F] border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p className="text-gray-500 text-sm animate-pulse">
-                جاري تحميل أحدث المنتجات...
-              </p>
+            
             </div>
           </div>
         </div>

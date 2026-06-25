@@ -1,7 +1,7 @@
 // components/products/ProductDetails.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { Heart, Truck, RefreshCw, Ruler, Info, AlertCircle } from "lucide-react";
 import { useCartContext } from "@/contexts/CartContext";
@@ -62,6 +62,16 @@ interface ProductDetailsProps {
     availability: boolean;
     variants?: ProductVariant[];
     has_variants?: boolean;
+    is_active?: boolean;
+    isBestSeller?: boolean;
+    pricing?: {
+      price: number;
+      has_discount: boolean;
+      discount_type: string | null;
+      discount_value: number | null;
+      price_after_discount: number | null;
+      final_price: number;
+    };
   };
 }
 
@@ -86,14 +96,19 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
+  // ✅ استخدام جميع الـ variants (وليس النشطة فقط) لعرض الألوان والمقاسات
+  const allVariants = product.variants || [];
+
+  // ✅ تصفية الـ variants النشطة فقط للإضافة إلى السلة
+  const activeVariants = allVariants.filter(variant => variant.is_active === true);
+  const hasActiveVariants = activeVariants.length > 0;
+
   // ✅ التحقق من وجود مقاسات في المنتج
   const hasSizes = (): boolean => {
-    if (!product.has_variants) return true; // منتج عادي بدون variants
+    if (!product.has_variants) return true;
+    if (!allVariants || allVariants.length === 0) return false;
     
-    if (!product.variants || product.variants.length === 0) return false;
-    
-    // البحث عن أي attribute نوعه مقاس
-    for (const variant of product.variants) {
+    for (const variant of allVariants) {
       if (!variant.attributes) continue;
       const hasSizeAttr = variant.attributes.some(attr => 
         attr.attribute_type?.name === "مقاس" || attr.attribute_type?.name === "المقاس"
@@ -104,36 +119,38 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   };
 
   const productHasSizes = hasSizes();
-  const canAddToCart = !product.has_variants || (selectedVariant !== null);
 
-  // ✅ استخراج الألوان من الـ variants (حتى لو كل الألوان في فاريانت واحد)
-  const getAvailableColorsFromVariants = (): { name: string; code: string; variants: ProductVariant[] }[] => {
-    if (!product.variants || product.variants.length === 0) {
-      return product.colors.map(c => ({ ...c, variants: [] }));
+  // ✅ استخراج الألوان من جميع الـ variants (النشطة وغير النشطة)
+  const getAvailableColorsFromVariants = (): { name: string; code: string; variants: ProductVariant[]; hasActiveVariant: boolean }[] => {
+    if (!allVariants || allVariants.length === 0) {
+      return product.colors.map(c => ({ ...c, variants: [], hasActiveVariant: false }));
     }
     
-    const colorMap = new Map<string, { name: string; code: string; variants: ProductVariant[] }>();
+    const colorMap = new Map<string, { name: string; code: string; variants: ProductVariant[]; hasActiveVariant: boolean }>();
     
-    product.variants.forEach((variant) => {
+    allVariants.forEach((variant) => {
       if (!variant.attributes) return;
       
-      // البحث عن كل attributes اللي نوعها "اللون"
       variant.attributes.forEach((attr) => {
         if (attr.attribute_type?.name === "اللون" && attr.value) {
           const colorName = attr.value;
           const colorCode = attr.meta?.color || "#000000";
+          const isActive = variant.is_active === true;
           
           if (!colorMap.has(colorName)) {
             colorMap.set(colorName, {
               name: colorName,
               code: colorCode,
-              variants: [variant] // نفس الفاريانت لكل الألوان
+              variants: [variant],
+              hasActiveVariant: isActive
             });
           } else {
-            // لو اللون موجود، نضيف الفاريانت لو مش موجود
             const existing = colorMap.get(colorName)!;
             if (!existing.variants.find(v => v.id === variant.id)) {
               existing.variants.push(variant);
+            }
+            if (isActive) {
+              existing.hasActiveVariant = true;
             }
           }
         }
@@ -143,24 +160,22 @@ export function ProductDetails({ product }: ProductDetailsProps) {
     return Array.from(colorMap.values());
   };
 
-  // ✅ الحصول على المقاسات المتاحة للون المحدد
+  // ✅ الحصول على المقاسات المتاحة للون المحدد من جميع الـ variants
   const getAvailableSizesForColor = (colorName: string): string[] => {
-    if (!product.variants || product.variants.length === 0) {
+    if (!allVariants || allVariants.length === 0) {
       return product.sizes;
     }
     
     const sizes = new Set<string>();
     
-    product.variants.forEach((variant) => {
+    allVariants.forEach((variant) => {
       if (!variant.attributes) return;
       
-      // هل هذا الفاريانت فيه اللون المطلوب؟
       const hasColor = variant.attributes.some(attr => 
         attr.attribute_type?.name === "اللون" && attr.value === colorName
       );
       
       if (hasColor) {
-        // جيب المقاسات من نفس الفاريانت
         variant.attributes.forEach((attr) => {
           if ((attr.attribute_type?.name === "مقاس" || attr.attribute_type?.name === "المقاس") && attr.value) {
             sizes.add(attr.value);
@@ -172,12 +187,12 @@ export function ProductDetails({ product }: ProductDetailsProps) {
     return Array.from(sizes);
   };
 
-  // ✅ الحصول على الـ variant المناسب للون والمقاس المختارين
+  // ✅ الحصول على الـ variant المناسب (سواء كان نشطاً أم لا)
   const getSelectedVariant = (colorName: string, sizeName: string): ProductVariant | null => {
-    if (!product.variants || product.variants.length === 0) return null;
+    if (!allVariants || allVariants.length === 0) return null;
     
-    // البحث عن فاريانت يحتوي على اللون والمقاس معاً
-    const variant = product.variants.find(variant => {
+    // ✅ البحث في جميع الـ variants (وليس النشطة فقط)
+    const variant = allVariants.find(variant => {
       if (!variant.attributes) return false;
       
       const hasColor = variant.attributes.some(attr => 
@@ -198,17 +213,14 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const getAllImages = (): string[] => {
     const images: string[] = [];
     
-    // أضف صورة الـ variant إذا وجدت
     if (selectedVariant && selectedVariant.variant_image) {
       images.push(selectedVariant.variant_image);
     }
     
-    // أضف الصور العادية للمنتج
     if (product.images && product.images.length > 0) {
       images.push(...product.images);
     }
     
-    // إزالة التكرارات
     return [...new Map(images.map(img => [img, img])).values()];
   };
 
@@ -265,10 +277,16 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const availableColors = product.has_variants ? getAvailableColorsFromVariants() : [];
   const availableSizes = selectedColor ? getAvailableSizesForColor(selectedColor) : [];
 
-  // ✅ تعيين أول لون متاح
+  // ✅ تعيين أول لون متاح (نشط)
   useEffect(() => {
     if (availableColors.length > 0 && !selectedColor) {
-      setSelectedColor(availableColors[0].name);
+      // البحث عن أول لون له Variant نشط
+      const firstActiveColor = availableColors.find(c => c.hasActiveVariant === true);
+      if (firstActiveColor) {
+        setSelectedColor(firstActiveColor.name);
+      } else {
+        setSelectedColor(availableColors[0].name);
+      }
     }
   }, [availableColors]);
 
@@ -277,8 +295,17 @@ export function ProductDetails({ product }: ProductDetailsProps) {
     if (selectedColor) {
       const sizes = getAvailableSizesForColor(selectedColor);
       if (sizes.length > 0) {
-        if (selectedSize && sizes.includes(selectedSize)) {
-          // ابق على نفس المقاس
+        // البحث عن أول مقاس له Variant نشط مع هذا اللون
+        let firstActiveSize = null;
+        for (const size of sizes) {
+          const variant = getSelectedVariant(selectedColor, size);
+          if (variant && variant.is_active === true) {
+            firstActiveSize = size;
+            break;
+          }
+        }
+        if (firstActiveSize) {
+          setSelectedSize(firstActiveSize);
         } else {
           setSelectedSize(sizes[0]);
         }
@@ -302,55 +329,105 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const displayColors = product.has_variants ? availableColors : product.colors;
   const displaySizes = product.has_variants ? availableSizes : product.sizes;
 
-  // ✅ السعر الحالي
-  const currentPrice = selectedVariant 
-    ? selectedVariant.price_after_discount || selectedVariant.price
-    : product.price;
-  
-  const originalPrice = selectedVariant?.has_discount ? selectedVariant.price : product.originalPrice;
+  // ✅ السعر الحالي - دمج خصم المنتج مع خصم الـ variant
+  let currentPrice = product.price;
+  let originalPrice: number | undefined = undefined;
+  let discountPercentage = 0;
+
+  if (selectedVariant) {
+    // إذا كان الـ variant عنده خصم
+    if (selectedVariant.has_discount && selectedVariant.price_after_discount) {
+      currentPrice = selectedVariant.price_after_discount;
+      originalPrice = selectedVariant.price;
+    } 
+    // إذا كان الـ variant مافيش خصم، استخدم خصم المنتج الرئيسي
+    else if (product.pricing?.has_discount && product.pricing?.price_after_discount) {
+      currentPrice = product.pricing.final_price;
+      originalPrice = product.pricing.price;
+    } 
+    // مافيش خصم خالص
+    else {
+      currentPrice = selectedVariant.price;
+    }
+  } else {
+    // منتج عادي (بدون variants)
+    currentPrice = product.price;
+    if (product.pricing?.has_discount && product.pricing?.price_after_discount) {
+      originalPrice = product.pricing.price;
+      currentPrice = product.pricing.final_price;
+    }
+  }
+
+  // حساب نسبة الخصم
+  if (originalPrice && originalPrice > currentPrice) {
+    discountPercentage = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+  }
+
+  // ✅ تحديد ما إذا كان يجب عرض باتش "الاكثر طلبا" - فقط للـ variant النشط
+  const showBestSellerBadge = useMemo(() => {
+    // إذا كان المنتج له variants
+    if (product.has_variants && product.variants && product.variants.length > 0) {
+      // ✅ فقط إذا تم اختيار variant و كان نشطاً
+      if (selectedVariant) {
+        return selectedVariant.is_active === true;
+      }
+      // ❌ لم يتم اختيار variant بعد - لا نعرض الباتش
+      return false;
+    }
+    // منتج عادي بدون variants - استخدم حالة المنتج الرئيسي
+    return product.is_active === true || product.isBestSeller === true;
+  }, [selectedVariant, product.has_variants, product.variants, product.is_active, product.isBestSeller]);
+
+  // ✅ التحقق من إمكانية الإضافة إلى السلة (يجب أن يكون الـ variant نشطاً)
+  const canAddToCart = !product.has_variants || (selectedVariant !== null && selectedVariant.is_active === true);
 
   const isProductFavorite = isFavorite(product.id.toString());
   const itemInCartQuantity = getItemQuantity(product.id);
 
-  // ✅ إضافة إلى السلة مع التحقق من وجود مقاسات
-  // components/products/ProductDetails.tsx
-// ✅ تحديث دالة handleAddToCart فقط
-
-// ✅ إضافة إلى السلة (دعم الضيوف)
-const handleAddToCart = async () => {
-  if (isAddingToCart) return;
-  
-  // ✅ التحقق من وجود مقاسات للمنتج
-  if (product.has_variants && !productHasSizes) {
-    toast.error("عذراً، لا توجد مقاسات متاحة لهذا المنتج حالياً. لا يمكنك إضافته إلى السلة.", {
-      duration: 4000,
-      position: "top-center",
-      icon: "⚠️",
-    });
-    return;
-  }
-  
-  if (product.has_variants && !selectedVariant) {
-    toast.error("الرجاء اختيار اللون والمقاس أولاً");
-    return;
-  }
-  
-  setIsAddingToCart(true);
-  
-  try {
-    const variantId = selectedVariant?.id || null;
-    const success = await addItem(product.id, quantity, variantId);
+  // ✅ إضافة إلى السلة مع التحقق من أن الـ variant نشط
+  const handleAddToCart = async () => {
+    if (isAddingToCart) return;
     
-    if (success) {
-      setQuantity(1);
+    if (product.has_variants && !productHasSizes) {
+      toast.error("عذراً، لا توجد مقاسات متاحة لهذا المنتج حالياً. لا يمكنك إضافته إلى السلة.", {
+        duration: 4000,
+        position: "top-center",
+        icon: "⚠️",
+      });
+      return;
     }
-  } catch (error) {
-    console.error("❌ خطأ في الإضافة إلى السلة:", error);
-    toast.error("حدث خطأ أثناء إضافة المنتج إلى السلة");
-  } finally {
-    setIsAddingToCart(false);
-  }
-};
+    
+    if (product.has_variants && !selectedVariant) {
+      toast.error("الرجاء اختيار اللون والمقاس أولاً");
+      return;
+    }
+    
+    // ✅ التحقق من أن الـ variant نشط
+    if (selectedVariant && !selectedVariant.is_active) {
+      toast.error("هذا المقاس غير متوفر حالياً. يرجى اختيار مقاس آخر.", {
+        duration: 4000,
+        position: "top-center",
+        icon: "⚠️",
+      });
+      return;
+    }
+    
+    setIsAddingToCart(true);
+    
+    try {
+      const variantId = selectedVariant?.id || null;
+      const success = await addItem(product.id, quantity, variantId);
+      
+      if (success) {
+        setQuantity(1);
+      }
+    } catch (error) {
+      console.error("❌ خطأ في الإضافة إلى السلة:", error);
+      toast.error("حدث خطأ أثناء إضافة المنتج إلى السلة");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
 
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
@@ -380,19 +457,36 @@ const handleAddToCart = async () => {
     return url;
   };
 
-  const discountAmount = originalPrice ? originalPrice - currentPrice : 0;
-  const discountPercentage = originalPrice
-    ? Math.round((discountAmount / originalPrice) * 100)
-    : 0;
-
   const allImages = getAllImages();
   const mainImage = getMainImage();
+
+  // ✅ رسالة عند عدم وجود Variants نشطة
+  if (product.has_variants && activeVariants.length === 0) {
+    return (
+      <div className="container-custom py-8">
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-gray-700 mb-4">
+            هذا المنتج غير متوفر حالياً
+          </h2>
+          <p className="text-gray-500 mb-6">
+            جميع خيارات هذا المنتج غير متاحة حالياً. يرجى التحقق لاحقاً.
+          </p>
+          <Link
+            href="/products"
+            className="inline-block bg-[#EC221F] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#d41d1a] transition"
+          >
+            استكشاف منتجات أخرى
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (authLoading) {
     return (
       <div className="container-custom py-8">
         <div className="animate-pulse">
-          <div className="h-96 bg-gray-200 rounded-[8px]  mb-4"></div>
+          <div className="h-96 bg-gray-200 rounded-[8px] mb-4"></div>
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
           <div className="h-4 bg-gray-200 rounded w-1/4"></div>
         </div>
@@ -436,9 +530,16 @@ const handleAddToCart = async () => {
             />
             
             <div className="absolute inset-0 z-10" />
+            
+            {/* ✅ إضافة باتش الاكثر طلبا - ديناميكي حسب الـ variant المختار */}
+            {showBestSellerBadge && (
+              <span className="absolute top-2 right-2 bg-[#EC221F] text-white text-xs font-bold px-2 py-1 rounded-full z-20">
+                الاكثر طلبا
+              </span>
+            )}
 
             {discountPercentage > 0 && (
-              <span className="absolute top-2 right-2 bg-[#EC221F] text-white text-xs font-bold px-1.5 py-0.5 rounded-full z-20">
+              <span className="absolute top-2 left-2 bg-[#23856D] text-white text-xs font-bold px-1.5 py-0.5 rounded-full z-20">
                 {discountPercentage}% خصم
               </span>
             )}
@@ -451,7 +552,7 @@ const handleAddToCart = async () => {
                   key={index}
                   onClick={() => setSelectedImage(index)}
                   className={`
-                    relative aspect-[4/3] bg-gray-100 rounded-[8px]  overflow-hidden
+                    relative aspect-[4/3] bg-gray-100 rounded-[8px] overflow-hidden
                     border-2 transition-all duration-200
                     ${selectedImage === index ? "border-[#EC221F]" : "border-transparent hover:border-gray-300"}
                   `}
@@ -495,11 +596,13 @@ const handleAddToCart = async () => {
 
           {/* التقييم */}
           <div className="flex items-center gap-2">
-           {product.reviewsCount > 0 &&( <div className="flex items-center bg-[#EDF0F8] text-[#3A4980] font-bold text-sm rounded-full px-2 py-1 justify-center gap-1">
-              <IoChatboxEllipsesOutline className="w-4 h-4" />
-              <span> {product.reviewsCount || 0} </span>
-              <p>تقييم</p>
-            </div>)}
+            {product.reviewsCount > 0 && (
+              <div className="flex items-center bg-[#EDF0F8] text-[#3A4980] font-bold text-sm rounded-full px-2 py-1 justify-center gap-1">
+                <IoChatboxEllipsesOutline className="w-4 h-4" />
+                <span> {product.reviewsCount || 0} </span>
+                <p>تقييم</p>
+              </div>
+            )}
             {product.avg_rating > 0 && (
               <div className="flex items-center bg-[#FFF5F4] text-[#FA6054] font-bold text-sm rounded-full px-2 py-1 justify-center gap-1">
                 <FaRegStar className="w-3 h-3" />
@@ -519,7 +622,7 @@ const handleAddToCart = async () => {
             </div>
           )}
 
-          {/* اختيار اللون */}
+          {/* اختيار اللون - مع إشارة للألوان غير النشطة */}
           {product.has_variants && displayColors.length > 0 && (
             <>
               <div>
@@ -527,52 +630,97 @@ const handleAddToCart = async () => {
                   <span className="text-[14px] font-bold text-[#333333]">اللون</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {displayColors.map((color) => (
-                    <button
-                      key={color.name}
-                      onClick={() => setSelectedColor(color.name)}
-                      className={`
-                        group relative w-8 h-8 rounded-full transition-all duration-200
-                        ${selectedColor === color.name ? "ring-2 ring-offset-1 scale-105" : "hover:scale-105"}
-                      `}
-                      style={{ backgroundColor: color.code }}
-                      aria-label={`لون ${color.name}`}
-                    >
-                      {selectedColor === color.name && (
-                        <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-bold">
-                          ✓
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                  {displayColors.map((color) => {
+                    // ✅ التحقق الآمن من وجود hasActiveVariant
+                    const hasActiveVariant = 'hasActiveVariant' in color 
+                      ? color.hasActiveVariant 
+                      : false;
+                    
+                    return (
+                      <button
+                        key={color.name}
+                        onClick={() => {
+                          if (hasActiveVariant) {
+                            setSelectedColor(color.name);
+                          } else {
+                            toast.error("هذا اللون غير متوفر حالياً");
+                          }
+                        }}
+                        className={`
+                          group relative w-8 h-8 rounded-full transition-all duration-200
+                          ${selectedColor === color.name ? "ring-2 ring-offset-1 scale-105" : "hover:scale-105"}
+                          ${!hasActiveVariant ? "opacity-40 cursor-not-allowed" : ""}
+                        `}
+                        style={{ backgroundColor: color.code }}
+                        aria-label={`لون ${color.name}`}
+                        disabled={!hasActiveVariant}
+                      >
+                        {selectedColor === color.name && (
+                          <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-bold">
+                            ✓
+                          </div>
+                        )}
+                        {!hasActiveVariant && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-full h-[2px] bg-red-500 rotate-45"></div>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <hr className="my-1" />
             </>
           )}
 
-          {/* اختيار المقاس - لو موجود */}
-          {product.has_variants && productHasSizes && displaySizes.length > 0 && (
+          {/* اختيار المقاس - متاح دائماً بدون تعطيل */}
+          {product.has_variants && productHasSizes && displaySizes.length > 0 && selectedColor && (
             <div>
               <div className="flex justify-between items-center my-2">
                 <span className="text-[14px] font-bold text-[#333333]">المقاس</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {displaySizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`
-                      flex items-center justify-center rounded-[8px] w-[70px] px-2 h-[32px] text-sm font-medium transition-all duration-200
-                      ${selectedSize === size 
-                        ? "bg-[#EDF0F8] text-[#3A4980]" 
-                        : "bg-[#F3F3F3] text-[#726C6C] hover:bg-[#EDF0F8]"
-                      }
-                    `}
-                  >
-                    {size}
-                  </button>
-                ))}
+                {displaySizes.map((size) => {
+                  // ✅ التحقق من وجود variant لهذا المقاس واللون (سواء كان نشطاً أم لا)
+                  const hasVariantForSize = allVariants.some(variant => {
+                    if (!variant.attributes) return false;
+                    
+                    const hasColor = variant.attributes.some(attr => 
+                      attr.attribute_type?.name === "اللون" && attr.value === selectedColor
+                    );
+                    
+                    const hasSize = variant.attributes.some(attr => 
+                      (attr.attribute_type?.name === "مقاس" || attr.attribute_type?.name === "المقاس") && attr.value === size
+                    );
+                    
+                    return hasColor && hasSize;
+                  });
+                  
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        if (hasVariantForSize) {
+                          setSelectedSize(size);
+                        } else {
+                          toast.error("هذا المقاس غير متوفر");
+                        }
+                      }}
+                      className={`
+                        flex items-center justify-center rounded-[8px] w-[70px] px-2 h-[32px] text-sm font-medium transition-all duration-200
+                        ${selectedSize === size 
+                          ? "bg-[#EDF0F8] text-[#3A4980]" 
+                          : "bg-[#F3F3F3] text-[#726C6C] hover:bg-[#EDF0F8]"
+                        }
+                        ${!hasVariantForSize ? "opacity-40 cursor-not-allowed" : ""}
+                      `}
+                      disabled={!hasVariantForSize}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -620,11 +768,11 @@ const handleAddToCart = async () => {
           <div className="flex flex-col">
             <button
               onClick={handleAddToCart}
-              disabled={isAddingToCart || cartLoading || (product.has_variants && (!selectedVariant || !productHasSizes))}
+              disabled={isAddingToCart || cartLoading || !canAddToCart}
               className={`
                 flex-1 text-[14px] px-4 py-2.5 rounded-[8px] font-bold transition-all duration-300 
                 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed
-                ${(product.has_variants && (!selectedVariant || !productHasSizes)) 
+                ${!canAddToCart 
                   ? "bg-gray-400 text-white cursor-not-allowed" 
                   : "bg-[#0A0500] text-white hover:bg-[#2b2b2b]"
                 }
@@ -636,7 +784,7 @@ const handleAddToCart = async () => {
                   جاري الإضافة...
                 </>
               ) : (
-                (product.has_variants && !productHasSizes) ? "غير متوفر حالياً" : "أضف إلى السلة"
+                !canAddToCart ? "غير متوفر حالياً" : "أضف إلى السلة"
               )}
             </button>
             

@@ -885,7 +885,7 @@ const prepareOrderData = useCallback(() => {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || isOrderCompleted}
-              className="w-full bg-black text-white py-3 rounded-xl font-semibold text-lg transition disabled:opacity-50"
+              className="hidden md:block  w-full bg-black text-white py-3 rounded-xl font-semibold text-lg transition disabled:opacity-50"
             >
               {isSubmitting ? "جاري المعالجة..." : "تأكيد الطلب"}
             </button>
@@ -897,7 +897,15 @@ const prepareOrderData = useCallback(() => {
               cartSummary={cartSummary}
               deliveryMethod={formData.deliveryMethod}
             />
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting || isOrderCompleted}
+              className="md:hidden block w-full bg-black text-white py-3 rounded-xl font-semibold text-lg transition disabled:opacity-50"
+            >
+              {isSubmitting ? "جاري المعالجة..." : "تأكيد الطلب"}
+            </button>
           </div>
+           
         </div>
       </div>
 

@@ -56,11 +56,15 @@ interface CategoryResponse {
     categories: CategoryData[];
   };
 }
+export interface SubcategoryData {
+  id: number;
+  name: string;
+}
 
 interface CategoryData {
   id: number;
   name: string;
-  subcategories: any[];
+  subcategories: SubcategoryData[];
   image: string;
 }
 
@@ -189,6 +193,7 @@ export interface AdData {
   is_active: number;
   created_at: string;
   updated_at: string;
+  end_date?:string
 }
 
 export async function getAds(): Promise<AdData[]> {
@@ -252,6 +257,7 @@ export interface ProductFilters {
   sizes?: string[];
   colors?: string[];
   categories?: number[];
+   subcategories?: number[];
   page?: number;
   per_page?: number;
 }
@@ -308,6 +314,9 @@ queryParts.push(`colors=[${formattedColors}]`);
   
   if (filters.categories && filters.categories.length > 0) {
     queryParts.push(`categories=[${filters.categories.join(',')}]`);
+  }
+    if (filters.subcategories && filters.subcategories.length > 0) {
+    queryParts.push(`subcategories=[${filters.subcategories.join(',')}]`);
   }
   
   return queryParts.join('&');
@@ -1431,4 +1440,96 @@ export async function updateProfileImage(imageFile: File): Promise<UpdateProfile
  */
 export async function updateUserLocale(locale: string): Promise<UpdateProfileResponse> {
   return updateUserProfile({ locale });
+}
+
+// src/services/api.ts
+
+// ... (باقي الكود الموجود لديك) ...
+
+// ========== واجهات (Interfaces) الأقسام ==========
+export interface SectionResponse {
+  result: boolean;
+  errNum: number;
+  message: string;
+  data: {
+    sections: SectionData[];
+  };
+}
+
+export interface SectionData {
+  id: number;
+  name: string;
+  is_active: boolean;
+  products: ProductData[];
+}
+
+/**
+ * دالة جلب جميع الأقسام مع منتجاتها
+ */
+export async function getSections(): Promise<SectionResponse> {
+  try {
+    const response = await fetch(`${API_URL}/sections`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result: SectionResponse = await response.json();
+    
+    if (result.result && result.errNum === 200) {
+      return result;
+    } else {
+      throw new Error(result.message || 'Failed to fetch sections');
+    }
+  } catch (error) {
+    console.error('Error fetching sections:', error);
+    throw error;
+  }
+}
+
+/**
+ * دالة جلب الأقسام النشطة فقط
+ */
+export async function getActiveSections(): Promise<SectionData[]> {
+  try {
+    const response = await getSections();
+    return response.data.sections.filter(section => section.is_active === true);
+  } catch (error) {
+    console.error('Error fetching active sections:', error);
+    return [];
+  }
+}
+
+/**
+ * دالة جلب قسم معين حسب المعرف
+ */
+export async function getSectionById(sectionId: number): Promise<SectionData | null> {
+  try {
+    const sections = await getActiveSections();
+    const section = sections.find(s => s.id === sectionId);
+    return section || null;
+  } catch (error) {
+    console.error('Error fetching section by id:', error);
+    return null;
+  }
+}
+
+/**
+ * دالة جلب قسم معين حسب الاسم
+ */
+export async function getSectionByName(sectionName: string): Promise<SectionData | null> {
+  try {
+    const sections = await getActiveSections();
+    const section = sections.find(s => s.name === sectionName);
+    return section || null;
+  } catch (error) {
+    console.error('Error fetching section by name:', error);
+    return null;
+  }
 }
