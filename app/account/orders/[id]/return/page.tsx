@@ -1,113 +1,13 @@
-// app/account/orders/[id]/page.tsx
+// app/account/orders/[id]/return/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  Package,
-  Truck,
-  CheckCircle,
-  Clock,
-  PackageCheck,
-  XCircle,
-  ChevronRight
-} from "lucide-react";
-import { GrMoney } from "react-icons/gr";
+import { ChevronRight, Package, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import OrderTracker, { type OrderStatus } from "@/components/OrderTracker";
 import { IoCopyOutline } from "react-icons/io5";
-import { FaLocationDot } from "react-icons/fa6";
 import toast from "react-hot-toast";
-
-// ========== تعريف الأنواع ==========
-interface OrderItem {
-  id: number;
-  title: string;
-  variant_id: number | null;
-  quantity: number;
-  unit_price: number;
-  discount_amount: number;
-  total_price: number;
-  images: string[];
-  variant?: {
-    id: number;
-    sku: string | null;
-    price: number;
-    has_discount: boolean;
-    discount_type: string | null;
-    discount_value: string | null;
-    price_after_discount: number;
-    quantity: number;
-    is_active: boolean;
-    variant_image: string;
-    attributes: Array<{
-      id: number;
-      attribute_type: {
-        id: number;
-        name: string;
-      };
-      value: string;
-      meta: {
-        color?: string;
-      } | null;
-    }>;
-  };
-}
-
-interface OrderAddress {
-  id: number;
-  street: string;
-  building: string;
-  floor: string;
-  apartment: string;
-  type: string;
-  type_label: string;
-  latitude: string | null;
-  longitude: string | null;
-  city: {
-    id: number;
-    name: string;
-    delivery_fee: string;
-  };
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-    image?: string;
-  };
-}
-
-interface AdditionalData {
-  name?: string;
-  phone?: string;
-  email?: string;
-}
-
-interface OrderDetails {
-  id: number;
-  orderNumber: string;
-  date: string;
-  status: OrderStatus;
-  status_label: string;
-  return_status_label: string | null;
-  return_status: string | null;
-  payment_method: string;
-  payment_status: string;
-  delivery_method: "pickup" | "delivery";
-  subtotal: number;
-  coupon_discount_amount: number;
-  total_discount_amount: number;
-  subtotal_after_discount: number;
-  shipping_amount: number;
-  tax_amount: number;
-  total_amount: number;
-  notes: string | null;
-  address: OrderAddress | null;
-  additional_data?: AdditionalData | null;
-  items: OrderItem[];
-  created_at: string;
-}
 
 // ========== إعدادات API ==========
 const API_URL = 'https://dukanah.admin.t-carts.com/api';
@@ -127,8 +27,53 @@ const getHeaders = (): HeadersInit => {
   };
 };
 
-// صورة ثابتة للمنتجات التي لا تحتوي على صورة
-const PLACEHOLDER_IMAGE = "/images/placeholder-product.png";
+// ========== أنواع البيانات ==========
+interface OrderItem {
+  id: number;
+  title: string;
+  name?: string;
+  brand?: string;
+  color?: string;
+  size?: string;
+  quantity: number;
+  unit_price: number;
+  price?: number;
+  total_price: number;
+  originalPrice?: number;
+  images: string[];
+  image?: string;
+}
+
+interface OrderDetails {
+  id: number;
+  order_number: string;
+  orderNumber?: string;
+  date: string;
+  created_at?: string;
+  status: string;
+  status_label?: string;
+  total_amount: number;
+  items: OrderItem[];
+}
+
+// ========== خيارات طريقة استرداد المبلغ ==========
+const refundMethods = [
+  { 
+    id: "wallet", 
+    name: "المحفظة الإلكترونية", 
+    description: "سيتم إضافة المبلغ إلى محفظتك"
+  },
+  // { 
+  //   id: "bank", 
+  //   name: "تحويل بنكي", 
+  //   description: "سيتم تحويل المبلغ إلى حسابك البنكي"
+  // },
+  // { 
+  //   id: "card", 
+  //   name: "نفس بطاقة الدفع", 
+  //   description: "سيتم رد المبلغ إلى نفس البطاقة"
+  // },
+];
 
 // ========== دالة جلب تفاصيل الطلب ==========
 const fetchOrderDetails = async (orderId: string): Promise<OrderDetails | null> => {
@@ -138,129 +83,95 @@ const fetchOrderDetails = async (orderId: string): Promise<OrderDetails | null> 
       headers: getHeaders(),
     });
     
-    if (response.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-      }
-      throw new Error('UNAUTHORIZED');
-    }
-    
     const data = await response.json();
+    console.log("📦 Order details for return:", data);
     
     if (data.result === true && data.data) {
-      return transformOrderDetails(data.data);
+      const order = data.data;
+      return {
+        id: order.id,
+        order_number: order.order_number,
+        orderNumber: order.order_number,
+        date: new Date(order.created_at).toLocaleDateString("ar-EG", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        created_at: order.created_at,
+        status: order.status_label,
+        total_amount: order.total_amount,
+        items: (order.items || []).map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          name: item.title,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          price: item.unit_price,
+          total_price: item.total_price,
+          images: item.images || [],
+          image: item.images && item.images[0] ? cleanImageUrl(item.images[0]) : "/images/placeholder-product.png",
+        })),
+      };
     }
     return null;
   } catch (error) {
     console.error("❌ Error fetching order details:", error);
-    
-    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
-      toast.error("جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى", {
-        duration: 3000,
-        position: "top-center",
-      });
-      if (typeof window !== 'undefined') {
-        window.location.href = '/auth/login';
-      }
-      return null;
-    }
-    
     toast.error("حدث خطأ في جلب تفاصيل الطلب");
     return null;
   }
 };
 
-// ========== دالة إلغاء الطلب ==========
-const cancelOrder = async (orderId: number): Promise<boolean> => {
+// ========== دالة تقديم طلب إرجاع ==========
+const submitReturnRequest = async (
+  orderId: number,
+  refundMethod: string,
+  notes: string
+): Promise<{ success: boolean; message: string; data?: any }> => {
   try {
-    const response = await fetch(`${API_URL}/orders/update/${orderId}`, {
+    const response = await fetch(`${API_URL}/returns`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        _method: 'put',
-        status: 'cancelled'
+        order_id: orderId,
+        refund_method: refundMethod,
+        notes: notes || null,
       }),
     });
     
-    if (response.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-      }
-      toast.error("جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى", {
-        duration: 3000,
-        position: "top-center",
-      });
-      setTimeout(() => {
-        window.location.href = '/auth/login';
-      }, 1500);
-      return false;
-    }
-    
     const data = await response.json();
+    console.log("📦 Return request response:", data);
     
     if (data.result === true && data.errNum === 200) {
-      toast.success("تم إلغاء الطلب بنجاح", {
-        duration: 4000,
-        position: "top-center",
-        icon: "✅",
-      });
-      return true;
+      return { 
+        success: true, 
+        message: data.message || "تم تقديم طلب الإرجاع بنجاح",
+        data: data.data
+      };
     } else {
-      toast.error(data.message || "حدث خطأ أثناء إلغاء الطلب", {
-        duration: 4000,
-        position: "top-center",
-      });
-      return false;
+      return { 
+        success: false, 
+        message: data.message || "حدث خطأ أثناء تقديم طلب الإرجاع" 
+      };
     }
   } catch (error) {
-    console.error("❌ Error cancelling order:", error);
-    toast.error("حدث خطأ في الاتصال بالخادم", {
-      duration: 4000,
-      position: "top-center",
-    });
-    return false;
+    console.error("❌ Error submitting return request:", error);
+    return { 
+      success: false, 
+      message: "حدث خطأ في الاتصال بالخادم" 
+    };
   }
 };
 
-// ========== تحويل حالة الطلب ==========
-const mapStatusToEnglish = (statusLabel: string): OrderStatus => {
-  const statusMap: Record<string, OrderStatus> = {
-    "ordered": "ordered",
-    "processing": "processing",
-    "ready_for_receive": "ready_for_receive",
-    "delivering": "delivering",
-    "delivered": "delivered",
-    "not_delivered": "not_delivered",
-    "cancelled": "cancelled",
-  };
-  return statusMap[statusLabel] || "ordered";
+// ========== تنظيف رابط الصورة ==========
+const cleanImageUrl = (url: string): string => {
+  if (!url) return "/images/placeholder-product.png";
+  if (url.startsWith("/storage")) {
+    return `https://admin.souqkaber.com${url}`;
+  }
+  return url;
 };
 
-// ========== تحويل طريقة الدفع ==========
-const mapPaymentMethod = (method: string): string => {
-  const methodMap: Record<string, string> = {
-    "كاش": "الدفع عند الاستلام",
-    "أونلاين": "أونلاين",
-    "card": "بطاقة ائتمان",
-    "mada": "مدى",
-    "wallet": "محفظة",
-  };
-  return methodMap[method] || method;
-};
-
-// ========== تحويل طريقة التوصيل ==========
-const mapDeliveryMethod = (method: string): "pickup" | "delivery" => {
-  const methodMap: Record<string, "pickup" | "delivery"> = {
-    "توصيل": "delivery",
-    "استلام": "pickup",
-    "استلام من الفرع": "pickup",
-  };
-  return methodMap[method] || "pickup";
-};
-
-// ========== تحويل تاريخ الطلب ==========
+// ========== تنسيق التاريخ ==========
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString("ar-EG", {
@@ -270,184 +181,91 @@ const formatDate = (dateString: string): string => {
   });
 };
 
-// ========== تنظيف رابط الصورة ==========
-const cleanImageUrl = (url: string): string => {
-  if (!url) return PLACEHOLDER_IMAGE;
-  if (url.startsWith("/storage")) {
-    return `https://dukanah.admin.t-carts.com${url}`;
-  }
-  return url;
-};
-
-// ========== الحصول على اسم المستخدم ==========
-const getUserName = (order: any): string => {
-  if (order.address?.user?.name) {
-    return order.address.user.name;
-  }
-  if (order.additional_data?.name) {
-    return order.additional_data.name;
-  }
-  return "غير متوفر";
-};
-
-// ========== دوال استخراج المقاس واللون ==========
-const getSize = (item: OrderItem): string | null => {
-  if (!item.variant?.attributes) return null;
-  const sizeAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "مقاس"
-  );
-  return sizeAttr?.value || null;
-};
-
-const getColor = (item: OrderItem): { name: string; hex: string | null } | null => {
-  if (!item.variant?.attributes) return null;
-  const colorAttr = item.variant.attributes.find(
-    (attr) => attr.attribute_type.name === "اللون"
-  );
-  if (!colorAttr) return null;
-  
-  return {
-    name: colorAttr.value,
-    hex: colorAttr.meta?.color || null,
-  };
-};
-
-// ========== تحويل بيانات الطلب ==========
-const transformOrderDetails = (apiOrder: any): OrderDetails => {
-  const englishStatus = mapStatusToEnglish(apiOrder.status_label);
-  
-  return {
-    id: apiOrder.id,
-    orderNumber: apiOrder.order_number,
-    date: formatDate(apiOrder.created_at),
-    status: englishStatus,
-    status_label: apiOrder.status_label,
-    return_status_label: apiOrder.return_status_label || null,
-    return_status: apiOrder.return_status || null,
-    payment_method: mapPaymentMethod(apiOrder.payment_method),
-    payment_status: apiOrder.payment_status,
-    delivery_method: mapDeliveryMethod(apiOrder.delivery_method),
-    subtotal: apiOrder.subtotal,
-    coupon_discount_amount: apiOrder.coupon_discount_amount,
-    total_discount_amount: apiOrder.total_discount_amount,
-    subtotal_after_discount: apiOrder.subtotal_after_discount,
-    shipping_amount: apiOrder.shipping_amount,
-    tax_amount: apiOrder.tax_amount,
-    total_amount: apiOrder.total_amount,
-    notes: apiOrder.notes,
-    address: apiOrder.address,
-    additional_data: apiOrder.additional_data,
-    items: apiOrder.items || [],
-    created_at: apiOrder.created_at,
-  };
-};
-
-// ========== حالة الطلب مع التنسيق ==========
-const statusConfig: Record<OrderStatus, { label: string; color: string; icon: any }> = {
-  ordered: { label: "تم الطلب", color: "status-pending", icon: Clock },
-  processing: { label: "قيد المعالجة", color: "status-processing", icon: Package },
-  ready_for_receive: { label: "جاهز للاستلام", color: "status-ready", icon: PackageCheck },
-  delivering: { label: "جارٍ التوصيل", color: "status-delivering", icon: Truck },
-  delivered: { label: "تم التسليم", color: "status-delivered", icon: CheckCircle },
-  not_delivered: { label: "لم يتم التسليم", color: "status-cancelled", icon: XCircle },
-  cancelled: { label: "ملغي", color: "status-cancelled", icon: XCircle },
-};
-
-export default function OrderDetailsPage() {
+export default function ReturnRequestPage() {
   const params = useParams();
   const router = useRouter();
   const orderId = params.id as string;
-  
+
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [orderNotes, setOrderNotes] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-  
-  // ✅ State for Cancel Modal
-  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [refundMethod, setRefundMethod] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
+  // جلب تفاصيل الطلب عند تحميل الصفحة
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      toast.error("يرجى تسجيل الدخول أولاً", {
-        duration: 3000,
-        position: "top-center",
-      });
-      router.push('/auth/login');
-      return;
-    }
-    
-    const loadOrderDetails = async () => {
+    const loadOrder = async () => {
       setLoading(true);
-      const data = await fetchOrderDetails(orderId);
-      setOrder(data);
-      if (data?.notes) {
-        setOrderNotes(data.notes);
-      }
+      const orderData = await fetchOrderDetails(orderId);
+      setOrder(orderData);
       setLoading(false);
     };
     
     if (orderId) {
-      loadOrderDetails();
+      loadOrder();
     }
-  }, [orderId, router]);
+  }, [orderId]);
 
+  // دالة تقديم طلب الإرجاع
+  const handleSubmit = async () => {
+    // التحقق من اختيار طريقة استرداد المبلغ
+    if (!refundMethod) {
+      toast.error("الرجاء اختيار طريقة استرداد المبلغ", {
+        duration: 3000,
+        position: "top-center",
+      });
+      return;
+    }
+
+    if (!order) return;
+
+    setIsSubmitting(true);
+    
+    const result = await submitReturnRequest(order.id, refundMethod, notes);
+    
+    if (result.success) {
+      setShowSuccess(true);
+      
+      // عرض رسالة نجاح إضافية
+      toast.success(result.message, {
+        duration: 4000,
+        position: "top-center",
+        icon: "✅",
+      });
+    } else {
+      toast.error(result.message, {
+        duration: 4000,
+        position: "top-center",
+      });
+    }
+    
+    setIsSubmitting(false);
+  };
+
+  // إغلاق رسالة النجاح والعودة للطلبات
+  const handleCloseSuccess = () => {
+    setShowSuccess(false);
+    router.push("/account/orders");
+  };
+
+  // نسخ رقم الطلب
   const copyOrderNumber = () => {
     if (order) {
-      navigator.clipboard.writeText(order.orderNumber);
-      setCopied(true);
+      navigator.clipboard.writeText(order.order_number);
       toast.success("تم نسخ رقم الطلب", {
         duration: 2000,
         position: "top-center",
       });
-      setTimeout(() => setCopied(false), 2000);
     }
-  };
-
-  const handleReturnClick = () => {
-    router.push(`/account/orders/${orderId}/return`);
-  };
-
-  // ✅ فتح وإغلاق مودال الإلغاء
-  const openCancelModal = () => {
-    setShowCancelModal(true);
-  };
-
-  const closeCancelModal = () => {
-    setShowCancelModal(false);
-  };
-
-  // ✅ دالة تأكيد إلغاء الطلب
-  const confirmCancelOrder = async () => {
-    if (!order) return;
-    
-    setIsCancelling(true);
-    closeCancelModal();
-    
-    const success = await cancelOrder(order.id);
-    
-    if (success) {
-      setOrder({
-        ...order,
-        status: "cancelled",
-        status_label: "ملغي"
-      });
-      
-      setTimeout(() => {
-        router.push("/account/orders");
-      }, 2000);
-    }
-    
-    setIsCancelling(false);
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
         <div className="container mx-auto px-4 py-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EC221F] mx-auto"></div>
-          <p className="text-gray-500 mt-4">جاري تحميل تفاصيل الطلب...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#23A6F0] mx-auto"></div>
+          <p className="text-gray-500 mt-4">جاري تحميل بيانات الطلب...</p>
         </div>
       </div>
     );
@@ -458,9 +276,14 @@ export default function OrderDetailsPage() {
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
         <div className="container mx-auto px-4 py-8 text-center">
           <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">الطلب غير موجود</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            الطلب غير موجود
+          </h2>
           <p className="text-gray-500 mb-4">عذراً، لا يمكننا العثور على هذا الطلب</p>
-          <Link href="/account/orders" className="inline-block bg-[#000000] text-white px-6 py-2 rounded-[8px] hover:bg-gray-800 transition">
+          <Link
+            href="/account/orders"
+            className="inline-block bg-[#23A6F0] text-white px-6 py-2 rounded-lg"
+          >
             العودة إلى الطلبات
           </Link>
         </div>
@@ -468,367 +291,179 @@ export default function OrderDetailsPage() {
     );
   }
 
-  // ✅ اختيار الحالة المناسبة للعرض
-  const isRefunded = order.return_status_label === "refunded";
-  const isReturnPending = order.return_status_label === "pending";
-  const isReturnRejected = order.return_status_label === "rejected";
-
-  // تحديد الحالة المعروضة
-  let displayStatus;
-  if (isRefunded) {
-    displayStatus = { label: "مرتجع", color: "status-refunded", icon: GrMoney };
-  } else if (isReturnPending) {
-    displayStatus = { label: "طلب مرتجع قيد الانتظار", color: "status-return-pending", icon: Clock };
-  } else if (isReturnRejected) {
-    displayStatus = { label: "تم رفض الإرجاع", color: "status-return-rejected", icon: XCircle };
-  } else {
-    displayStatus = statusConfig[order.status];
-  }
-
-  const StatusIcon = displayStatus.icon;
-  const userName = getUserName(order);
-
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
-        <div className="container mx-auto mb-3 px-4 md:px-8">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-            <Link href="/account" className="hover:text-[#EC221F] transition">حسابي</Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href="/account/orders" className="hover:text-[#EC221F] transition">طلباتي</Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-[#EC221F] font-medium">تفاصيل الطلب</span>
-          </div>
-          
-          <h1 className="text-[20px] font-bold mb-2 md:text-2xl text-[#180100] md:mb-4">تفاصيل الطلب</h1>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* العمود الأيمن */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* معلومات الطلب الأساسية */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-                      <div className="flex gap-2 sm:gap-4 items-center text-base sm:text-[20px] font-bold text-[#180100]">
-                        <h1 className="text-sm sm:text-base">رقم الطلب</h1>
-                        <div className="flex gap-1 sm:gap-2 items-center">
-                          <p className="font-bold text-gray-800 text-sm sm:text-base">
-                            <span>
-                              {order.orderNumber.length > 10 ? order.orderNumber.substring(0, 10) + '...' : order.orderNumber}
-                            </span>
-                          </p>
-                          <IoCopyOutline 
-                            className={`w-4 h-4 sm:w-5 sm:h-5 cursor-pointer transition ${copied ? 'text-green-500' : 'hover:text-[#EC221F]'}`}
-                            onClick={copyOrderNumber}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    {/* ✅ عرض الحالة (مرتجع / قيد الانتظار / مرفوض / الحالة العادية) */}
-                    <div className={`px-2 sm:px-3 py-1 rounded-full sm:text-sm text-[10px] font-medium flex items-center gap-1 sm:gap-1.5 ${displayStatus.color}`}>
-                      <StatusIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      {displayStatus.label}
-                    </div>
-                  </div>
-                  <p className="text-sm sm:text-[18px] text-[#333333]">{order.date}</p>
-                </div>
-              </div>
-              
-              <br />
-              
-              {/* المنتجات */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-bold text-gray-800 mb-4">المنتجات ({order.items.length})</h2>
-                <div className="space-y-4">
-                  {order.items.map((item, idx) => {
-                    // ✅ استخدام صورة المتغير أولاً إذا كانت موجودة
-                    const variantImage = item.variant?.variant_image 
-                      ? cleanImageUrl(item.variant.variant_image) 
-                      : null;
-                    
-                    const productImage = item.images && item.images.length > 0 
-                      ? cleanImageUrl(item.images[0]) 
-                      : PLACEHOLDER_IMAGE;
-
-                    // ✅ اختيار الصورة المناسبة (أولوية لصورة المتغير)
-                    const displayImage = variantImage || productImage;
-                    
-                    // استخراج المقاس واللون
-                    const size = getSize(item);
-                    const color = getColor(item);
-                    
-                    return (
-                      <div key={idx} className="flex flex-col md:flex-row items-center gap-4 border border-gray-200 rounded-[8px] p-3">
-                        <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 relative">
-                          <Image
-                            src={displayImage}
-                            alt={item.title}
-                            width={80}
-                            height={80}
-                            className="object-cover w-full h-full"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1 md:text-right text-center">
-                          <div className="flex flex-col md:flex-row gap-3 md:justify-between items-center md:items-start">
-                            <div>
-                              <p className="font-bold text-gray-800">{item.title}</p>
-                              
-                              {/* 🔥 عرض المقاس واللون */}
-                              <div className="flex flex-wrap gap-2 mt-1.5">
-                                {size && (
-                                  <span className="inline-flex items-center gap-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
-                                    <span className="font-medium">المقاس:</span>
-                                    <span>{size}</span>
-                                  </span>
-                                )}
-                                
-                                {color && (
-                                  <span className="inline-flex items-center gap-1.5 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-700">
-                                    <span className="font-medium">اللون:</span>
-                                    <span>{color.name}</span>
-                                    {color.hex && (
-                                      <span 
-                                        className="w-3 h-3 rounded-full border border-gray-300 inline-block"
-                                        style={{ backgroundColor: color.hex }}
-                                      />
-                                    )}
-                                  </span>
-                                )}
-                              </div>
-                              
-                              <div className="flex gap-1 md:gap-3 mt-2 text-xs text-black font-bold">
-                                <span>الكمية: <span className="text-gray-500">x{item.quantity}</span></span>
-                                <span>السعر: <span className="text-gray-500">EGP {item.unit_price.toFixed(2)}</span></span>
-                              </div>
-                            </div>
-                            <div className="text-left">
-                              <p className="font-bold text-[#EC221F]">EGP {item.total_price.toFixed(2)}</p>
-                              {item.discount_amount > 0 && (
-                                <p className="text-xs text-gray-400">الخصم: {item.discount_amount.toFixed(2)}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {/* 🔥 عرض OrderTracker - يخفي إذا كان مرتجع أو قيد الانتظار أو مرفوض */}
-                {!isRefunded && !isReturnPending && !isReturnRejected && (
-                  <div className="mt-6">
-                    <OrderTracker 
-                      currentStatus={order.status} 
-                      deliveryMethod={order.delivery_method}
-                    />
-                  </div>
-                )}
-              </div>
-              
-              <br />
-              
-              {/* ملخص الطلب */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">ملخص الطلب</h2>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">المبلغ الإجمالي</span>
-                    <span className="font-bold text-gray-800">EGP {order.subtotal.toFixed(2)}</span>
-                  </div>
-                  {order.coupon_discount_amount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">خصم الكوبون</span>
-                      <span className="font-bold text-[#EC221F]">-EGP {order.coupon_discount_amount.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {order.total_discount_amount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">الخصم الكلي</span>
-                      <span className="font-bold text-[#EC221F]">-EGP {order.total_discount_amount.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">رسوم التوصيل</span>
-                    <span className="font-bold text-gray-800">EGP {order.shipping_amount.toFixed(2)}</span>
-                  </div>
-                  {order.tax_amount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">الضرائب</span>
-                      <span className="font-bold text-gray-800">EGP {order.tax_amount.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between py-3 border-t border-gray-200 mt-2">
-                    <span className="text-lg font-bold text-gray-800">الإجمالي</span>
-                    <span className="text-xl font-bold text-[#EC221F]">EGP {order.total_amount.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* العمود الأيسر */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-base font-bold text-gray-800 mb-4">معلومات الاتصال</h2>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-bold">الاسم الكامل</span>
-                    <span className="font-medium text-gray-600">{userName}</span>
-                  </div>
-                  {order.additional_data?.phone && (
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="font-bold">رقم الهاتف</span>
-                      <span className="font-medium text-gray-600" dir="ltr">{order.additional_data.phone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <br />
-              
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-base font-bold mb-4">طريقة الاستلام</h2>
-                <span className="font-medium text-gray-800">
-                  {order.delivery_method === "pickup" ? "استلام من الفرع" : "توصيل"}
-                </span>
-                {order.address && (
-                  <div className="flex items-center gap-2 border rounded-xl px-2 py-3 mt-3">
-                    <FaLocationDot className="text-gray-500 flex-shrink-0" />
-                    <p className="font-medium text-gray-400 text-sm">
-                      {order.address.street}، {order.address.city?.name}
-                    </p>
-                  </div>
-                )}
-              </div>
-              
-              <br/>
-              
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-base font-bold mb-4">طريقة الدفع</h2>
-                <div className="flex items-center gap-3 p-2 border border-gray-300 rounded-xl">
-                  <div className="w-10 h-10 bg-white rounded-[8px] flex items-center justify-center shadow-sm">
-                    <GrMoney />
-                  </div>
-                  <div>
-                    <p className="text-gray-500">{order.payment_method}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <br/>
-              
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-base font-bold text-gray-800 mb-4">ملاحظات</h2>
-                <textarea
-                  value={orderNotes}
-                  onChange={(e) => setOrderNotes(e.target.value)}
-                  placeholder="لا توجد ملاحظات"
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#EC221F] resize-none bg-gray-50"
-                  rows={3}
-                  readOnly
-                />
-              </div>
-
-              <div className="flex gap-3 mt-3 md:mt-6 mx-2">
-                {/* ✅ إخفاء زر الإرجاع إذا كان الطلب مرتجع أو قيد الانتظار أو مرفوض */}
-                {!isRefunded && !isReturnPending && !isReturnRejected && order.status === "delivered" && (
-                  <button 
-                    onClick={handleReturnClick} 
-                    className="flex-1 border-2 border-[#000000] text-[#000000] py-3 rounded-xl font-medium hover:bg-red-50 transition"
-                  >
-                    إرجاع
-                  </button>
-                )}
-                
-                {!isRefunded && !isReturnPending && !isReturnRejected && order.status === "ordered" && (
-                  <button 
-                    onClick={openCancelModal}
-                    disabled={isCancelling}
-                    className="flex-1 border-2 border-red-500 text-red-600 py-3 rounded-xl font-medium hover:bg-red-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {isCancelling ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                        جاري الإلغاء...
-                      </>
-                    ) : (
-                      "إلغاء الطلب"
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
+      <div className="container mx-auto mb-3 px-4 md:px-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+          <Link href="/account" className="hover:text-[#23A6F0] transition">حسابي</Link>
+          <ChevronRight className="w-4 h-4" />
+          <Link href="/account/orders" className="hover:text-[#23A6F0] transition">طلباتي</Link>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-[#23A6F0] font-medium">طلب إرجاع</span>
         </div>
 
-        <style jsx global>{`
-          .status-pending { background-color: #f181173D; color: #f18117; }
-          .status-processing { background-color: #ED89363D; color: #ED8936; }
-          .status-ready { background-color: #A0AEC03D; color: #A0AEC0; }
-          .status-delivering { background-color: #F6AD553D; color: #F6AD55; }
-          .status-delivered { background-color: #48BB783D; color: #48BB78; }
-          .status-cancelled { background-color: #F565653D; color: #F56565; }
-          .status-refunded { background-color: #9F7AEA3D; color: #9F7AEA; } /* ✅ حالة المرتجع */
-          .status-return-pending { background-color: #F6AD553D; color: #F6AD55; } /* ✅ طلب مرتجع قيد الانتظار */
-          .status-return-rejected { background-color: #F565653D; color: #F56565; } /* ✅ تم رفض الإرجاع */
-        `}</style>
-      </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-6 text-right">
+            طلب إرجاع
+          </h1>
 
-      {/* ✅ Modal تأكيد إلغاء الطلب */}
-      {showCancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-fadeIn">
-            {/* أيقونة */}
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
-                <XCircle className="w-8 h-8 text-red-600" />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+            {/* رقم الطلب والتاريخ */}
+            <div>
+              <div className="flex items-center gap-3 text-xl text-[#180100] font-bold">
+                <p>رقم الطلب</p>
+                <div className="flex items-center gap-1">
+                  <p>{order.order_number}</p>
+                  <IoCopyOutline 
+                    className="cursor-pointer hover:text-[#23A6F0] transition"
+                    onClick={copyOrderNumber}
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="text-[#333333] text-lg my-3">{order.date}</p>
               </div>
             </div>
-            
-            {/* النص */}
-            <h3 className="text-xl font-bold text-center text-gray-800 mb-2">
-              تأكيد إلغاء الطلب
-            </h3>
-            <p className="text-center text-gray-600 text-sm mb-1">
-              هل أنت متأكد من إلغاء الطلب؟
-            </p>
-            <p className="text-center text-red-500 font-bold text-sm mb-4">
-              #{order?.orderNumber}
-            </p>
-            <p className="text-center text-gray-400 text-xs mb-6">
-              لا يمكنك التراجع عن هذا الإجراء
-            </p>
-            
-            {/* الأزرار */}
-            <div className="flex gap-3">
-              <button
-                onClick={closeCancelModal}
-                className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={confirmCancelOrder}
-                disabled={isCancelling}
-                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isCancelling ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    جاري الإلغاء...
-                  </>
-                ) : (
-                  "نعم، إلغاء الطلب"
-                )}
-              </button>
+
+            {/* المنتجات */}
+            <div>
+              <p className="text-gray-600 mb-3">
+                المنتجات ({order.items.length})
+              </p>
+              {order.items.map((item, idx) => {
+                const productImage = item.image || (item.images && item.images[0] ? cleanImageUrl(item.images[0]) : "/images/placeholder-product.png");
+                
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-4 border border-gray-200 rounded-xl p-3 mb-3"
+                  >
+                    <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden">
+                      <Image
+                        src={productImage}
+                        alt={item.title || item.name || "منتج"}
+                        width={80}
+                        height={80}
+                        className="object-cover w-full h-full"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/images/placeholder-product.png";
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-bold text-gray-800">{item.title || item.name}</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            الكمية: x{item.quantity}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800 md:text-base text-xs flex gap-1">
+                            {(item.unit_price || item.price || 0).toFixed(2)} EGP
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          </div>
+
+          {/* ملاحظات */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6 space-y-6 my-4">
+            <label className="block text-[#252525] text-lg md:text-2xl font-bold mb-2">
+              ملاحظات
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="قم بإدخال ملاحظاتك الإضافية.."
+              className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#23A6F0] resize-none"
+              rows={3}
+            />
+          </div>
+
+          {/* طريقة استرداد المبلغ */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 md:p-6 space-y-6 my-4">
+            <label className="block text-[#252525] text-lg md:text-2xl font-bold mb-2">
+              طريقة استرداد المبلغ
+            </label>
+            <div className="space-y-3">
+              {refundMethods.map((method) => (
+                <label
+                  key={method.id}
+                  className={`flex items-start gap-4 p-4 border-2 rounded-xl cursor-pointer transition ${
+                    refundMethod === method.id
+                      ? "border-[#23A6F0] bg-red-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="refundMethod"
+                    value={method.id}
+                    checked={refundMethod === method.id}
+                    onChange={(e) => setRefundMethod(e.target.value)}
+                    className="mt-1 w-4 h-4 text-[#23A6F0] focus:ring-[#23A6F0]"
+                  />
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-800">{method.name}</p>
+                    <p className="text-sm text-gray-500">{method.description}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* زر تأكيد الطلب */}
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !refundMethod}
+            className={`w-full py-3 rounded-xl font-medium transition mt-4 ${
+              isSubmitting || !refundMethod
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-[#000000] text-white hover:bg-gray-800"
+            }`}
+          >
+            {isSubmitting ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                جاري تقديم الطلب...
+              </div>
+            ) : (
+              "تأكيد طلب الإرجاع"
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* نافذة النجاح */}
+      {showSuccess && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">تم تقديم طلب الإرجاع بنجاح</h3>
+            <p className="text-gray-500 mb-6">
+              رقم الطلب: <span className="font-bold text-[#23A6F0]">{order.order_number}</span>
+              <br />
+              سيتم معالجة طلبك والتواصل معك قريباً
+            </p>
+            <button
+              onClick={handleCloseSuccess}
+              className="w-full bg-[#000000] text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition"
+            >
+              العودة إلى الطلبات
+            </button>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
