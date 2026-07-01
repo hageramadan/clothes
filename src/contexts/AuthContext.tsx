@@ -33,7 +33,7 @@ interface AuthContextType {
   loginWithEmail: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   loginWithPhone: (phone: string, password: string, country_code: string) => Promise<{ success: boolean; message: string }>;
   registerWithEmail: (name: string, email: string, password: string) => Promise<{ success: boolean; message: string }>;
-  registerWithPhone: (name: string, phone: string, password: string, country_code: string) => Promise<{ success: boolean; message: string }>;
+  registerWithPhone: (name: string, email:string , phone: string, password: string, country_code: string) => Promise<{ success: boolean; message: string }>;
   logoutUser: () => Promise<void>;
   verifyOTPWithEmail: (otp: string, email: string) => Promise<{ success: boolean; message: string; token?: string }>;
   verifyOTPWithPhone: (otp: string, phone: string) => Promise<{ success: boolean; message: string; token?: string }>;
@@ -193,12 +193,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // إنشاء حساب برقم الهاتف
   const handleRegisterWithPhone = useCallback(async (
     name: string,
+    email: string,
     phone: string,
     password: string,
     country_code: string
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      const result = await registerWithPhone({ name, phone, password, country_code });
+      const result = await registerWithPhone({ name, email, phone, password, country_code });
       
       if (result.result) {
         return { success: true, message: result.message };

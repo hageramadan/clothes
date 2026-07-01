@@ -60,8 +60,10 @@ export default function RegisterWithPhone() {
       newErrors.name = "الاسم يجب أن يكون 3 أحرف على الأقل";
     }
 
-    // التحقق من البريد الإلكتروني (اختياري ولكن نتحقق من صحته إذا أدخل)
-    if (formData.email) {
+    // التحقق من البريد الإلكتروني (إلزامي)
+    if (!formData.email.trim()) {
+      newErrors.email = "البريد الإلكتروني مطلوب";
+    } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         newErrors.email = "البريد الإلكتروني غير صحيح";
@@ -109,9 +111,10 @@ export default function RegisterWithPhone() {
 
     setIsSubmitting(true);
 
-    // استخدام API حقيقي عبر الـ Context
+    // استدعاء دالة التسجيل
     const result = await registerWithPhone(
       formData.name,
+      formData.email,
       formData.phoneNumber,
       formData.password,
       formData.countryCode
@@ -119,14 +122,18 @@ export default function RegisterWithPhone() {
 
     if (result.success) {
       toast.success(result.message || "تم إرسال رمز التحقق إلى هاتفك! ✅", {
-        duration: 4000,
+        duration: 3000,
         position: "top-center",
       });
 
-      // التوجيه إلى صفحة التحقق أو تسجيل الدخول
+      // ✅ التوجيه إلى صفحة OTP مع تمرير رقم الهاتف
       setTimeout(() => {
-        router.push("/auth/login?registered=true");
-      }, 2000);
+        router.push(
+          `/auth/verify-otp/phone?phone=${encodeURIComponent(
+            `${formData.countryCode}${formData.phoneNumber}`
+          )}`
+        );
+      }, 1500);
     } else {
       toast.error(result.message || "حدث خطأ أثناء إنشاء الحساب", {
         duration: 4000,
@@ -147,18 +154,6 @@ export default function RegisterWithPhone() {
 
   return (
     <>
-      {/* <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            fontSize: "14px",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            direction: "rtl",
-          },
-        }}
-      /> */}
-
       <div className="page-with-padding bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center min-h-screen">
         <div className="container mx-auto px-4 py-6 md:py-12">
           <div className="max-w-md mx-auto">
@@ -202,10 +197,10 @@ export default function RegisterWithPhone() {
                   )}
                 </div>
 
-                {/* البريد الإلكتروني (اختياري) */}
+                {/* البريد الإلكتروني (إلزامي) */}
                 <div className="mb-6">
                   <label className="block text-gray-700 font-medium mb-2">
-                    البريد الإلكتروني <span className="text-gray-400 text-xs">(اختياري)</span>
+                    البريد الإلكتروني <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <FaEnvelope className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -238,7 +233,6 @@ export default function RegisterWithPhone() {
                     value={`${formData.countryCode}${formData.phoneNumber}`}
                     onChange={handlePhoneChange}
                     required={true}
-                    
                   />
                   {errors.phone && (
                     <p className="text-red-500 text-xs mt-1">{errors.phone}</p>

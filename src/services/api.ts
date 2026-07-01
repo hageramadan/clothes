@@ -781,6 +781,7 @@ interface RegisterWithEmailRequest {
 
 interface RegisterWithPhoneRequest {
   name: string;
+  email: string;
   phone: string;
   password: string;
   country_code: string;

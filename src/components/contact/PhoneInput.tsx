@@ -212,9 +212,9 @@ export default function PhoneInput({ value, onChange, required = false }: PhoneI
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      {/* <label className="block text-sm font-medium text-gray-700 mb-1">
         رقم الجوال {required && <span className="text-red-500">*</span>}
-      </label>
+      </label> */}
       
       <div>
         <div className="relative flex flex-row-reverse items-stretch">

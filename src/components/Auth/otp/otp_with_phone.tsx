@@ -1,16 +1,38 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { FaPhoneAlt, FaArrowRight, FaCheckCircle } from "react-icons/fa";
-import toast, { Toaster } from "react-hot-toast";
+import { useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function OTPWithPhone() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { verifyOTPWithPhone, resendOTPToPhone, isAuthenticated } = useAuth();
+  
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(59);
   const [canResend, setCanResend] = useState(false);
+  
+  // جلب رقم الهاتف من الـ URL
+  const phone = searchParams.get("phone") || "";
+  const isLogin = searchParams.get("isLogin") === "true";
+
+  // التحقق من وجود رقم الهاتف
+  useEffect(() => {
+    if (!phone) {
+      toast.error("رقم الهاتف مطلوب للتحقق");
+      setTimeout(() => router.push("/auth/login"), 2000);
+    }
+  }, [phone, router]);
+
+  // التوجيه إلى الصفحة الرئيسية إذا كان المستخدم موثّقاً
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
 
   // مؤقت إعادة الإرسال
   useEffect(() => {
@@ -45,7 +67,7 @@ export default function OTPWithPhone() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const otpValue = otp.join("");
 
@@ -56,124 +78,143 @@ export default function OTPWithPhone() {
 
     setIsLoading(true);
 
-    // محاكاة التحقق من OTP
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("تم التحقق بنجاح! ✅");
+    // ✅ استدعاء دالة التحقق من OTP للهاتف
+    const result = await verifyOTPWithPhone(otpValue, phone);
 
-      // التوجيه إلى صفحة إعادة تعيين كلمة المرور
+    if (result.success) {
+      toast.success("تم التحقق بنجاح! جاري توجيهك... 🎉", {
+        duration: 2000,
+      });
+      
+      // ✅ التوجيه إلى الصفحة الرئيسية بعد التحقق
       setTimeout(() => {
-        router.push("/auth/reset-password");
+        router.push("/");
+        router.refresh();
       }, 1500);
-    }, 1500);
+    } else {
+      toast.error(result.message || "رمز التحقق غير صحيح");
+    }
+
+    setIsLoading(false);
   };
 
-  const handleResendCode = () => {
-    if (!canResend) return;
+  const handleResendCode = async () => {
+    if (!canResend) {
+      toast.error("الرجاء الانتظار قبل إعادة الإرسال");
+      return;
+    }
+    
+    setIsLoading(true);
 
-    toast.success("تم إرسال رمز جديد إلى رقم هاتفك");
-    setCanResend(false);
-    setTimeLeft(59);
-    setOtp(["", "", "", "", "", ""]);
+    // ✅ استدعاء دالة إعادة إرسال OTP للهاتف
+    const result = await resendOTPToPhone(phone);
 
-    // التركيز على أول حقل
-    document.getElementById("otp-0")?.focus();
+    if (result.success) {
+      toast.success(result.message || "تم إرسال رمز جديد إلى رقم هاتفك", {
+        duration: 3000,
+      });
+      setCanResend(false);
+      setTimeLeft(59);
+      setOtp(["", "", "", "", "", ""]);
+      
+      // التركيز على أول حقل
+      setTimeout(() => {
+        document.getElementById("otp-0")?.focus();
+      }, 100);
+    } else {
+      toast.error(result.message || "فشل إعادة إرسال الرمز", {
+        duration: 4000,
+      });
+    }
+
+    setIsLoading(false);
+  };
+
+  // تنسيق رقم الهاتف للعرض
+  const formatPhoneNumber = (phoneNumber: string) => {
+    if (!phoneNumber) return "";
+    // إزالة علامة + إذا وجدت
+    const cleaned = phoneNumber.replace(/^\+/, "");
+    // إضافة مسافات بين الأرقام
+    return phoneNumber;
   };
 
   return (
-    <>
-      {/* <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            fontSize: "14px",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            direction: "rtl",
-          },
-        }}
-      /> */}
-
-      <div className=" page-with-padding bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
-        <div className="container mx-auto px-4 py-6 md:py-12">
-          <div className="max-w-md mx-auto">
-            {/* بطاقة التحقق */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-              {/* العنوان */}
-              <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                  التحقق من الهاتف
-                </h1>
-                <p className="text-gray-500 text-sm">
-                  أدخل الرقم المكون من 6 أرقام الذي أرسلناه عبر رقم الهاتف:
-                </p>
-                <p className="text-gray-700 font-medium mt-2 dir-ltr">
-                  +20 12 3456 74910
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit}>
-                {/* حقول OTP */}
-                <div className="flex justify-between gap-2 mb-6 flex-row-reverse">
-                  {otp.map((digit, index) => (
-                    <input
-                      key={index}
-                      id={`otp-${index}`}
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      className="w-12 h-12 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-[#ff3c27] focus:ring-2 focus:ring-[#ff3c27]/20 outline-none transition-all"
-                      maxLength={1}
-                      
-                    />
-                  ))}
-                </div>
-
-                {/* مؤقت إعادة الإرسال */}
-                <div className="text-center mb-6">
-                  {!canResend ? (
-                    <p className="text-gray-500 text-sm">
-                      لم تستلم الرمز؟{" "}
-                      <span className="text-[#ff3c27] font-medium">
-                        إعادة الإرسال ({timeLeft.toString().padStart(2, "0")})
-                      </span>
-                    </p>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleResendCode}
-                      className="text-[#ff3c27] font-medium hover:underline"
-                    >
-                      لم تستلم الرمز؟ إعادة إرسال
-                    </button>
-                  )}
-                </div>
-
-                {/* زر الاستمرار */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`w-full flex justify-center items-center gap-2 px-4 py-3 bg-black text-white rounded-[8px] hover:bg-gray-800 transition font-medium ${
-                    isLoading ? "opacity-70 cursor-not-allowed" : ""
-                  }`}
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      جاري التحقق...
-                    </>
-                  ) : (
-                    <>استمرار</>
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            {isLogin ? "التحقق من تسجيل الدخول" : "التحقق من الهاتف"}
+          </h1>
+          <p className="text-gray-500 text-sm">
+            {isLogin 
+              ? "أدخل الرقم المكون من 6 أرقام الذي أرسلناه إلى رقم هاتفك لتأكيد تسجيل الدخول"
+              : "أدخل الرقم المكون من 6 أرقام الذي أرسلناه إلى رقم هاتفك لتأكيد الحساب"
+            }
+          </p>
+          <p className="text-gray-700 font-medium mt-2 dir-ltr">
+            {phone || "رقم الهاتف"}
+          </p>
         </div>
+
+        <form onSubmit={handleSubmit}>
+          {/* حقول OTP */}
+          <div className="flex justify-between md:gap-2 mb-6 flex-row-reverse">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                id={`otp-${index}`}
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={digit}
+                onChange={(e) => handleOtpChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                disabled={isLoading}
+                className="w-10 h-10 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-[#ff3c27] focus:ring-2 focus:ring-[#ff3c27]/20 outline-none transition-all disabled:opacity-50"
+                maxLength={1}
+              />
+            ))}
+          </div>
+
+          {/* مؤقت إعادة الإرسال */}
+          <div className="text-center mb-6">
+            {!canResend ? (
+              <p className="text-gray-500 text-sm">
+                لم تستلم الرمز؟{" "}
+                <span className="text-[#ff3c27] font-medium">
+                  إعادة الإرسال ({timeLeft.toString().padStart(2, "0")} ثانية)
+                </span>
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={isLoading}
+                className="text-[#ff3c27] font-medium hover:underline transition disabled:opacity-50"
+              >
+                لم تستلم الرمز؟ إعادة إرسال
+              </button>
+            )}
+          </div>
+
+          {/* زر التحقق */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 bg-black text-white rounded-[8px] hover:bg-gray-800 transition disabled:opacity-50 font-medium"
+          >
+            {isLoading ? (
+              <>
+                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"></span>
+                جاري التحقق...
+              </>
+            ) : (
+              "تحقق"
+            )}
+          </button>
+        </form>
       </div>
-    </>
+    </div>
   );
 }
