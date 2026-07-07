@@ -55,6 +55,65 @@ export default function OTPWithEmail() {
     }
   };
 
+  // ✅ دالة معالجة اللصق (Paste)
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    
+    // الحصول على النص المنسوخ
+    const pastedData = e.clipboardData.getData("text");
+    
+    // إزالة أي مسافات أو أحرف غير رقمية
+    const cleanedData = pastedData.replace(/\s/g, "").replace(/[^0-9]/g, "");
+    
+    // التأكد من أن النص يحتوي على 6 أرقام على الأقل
+    if (cleanedData.length >= 6) {
+      // أخذ أول 6 أرقام فقط
+      const otpDigits = cleanedData.slice(0, 6).split("");
+      
+      // توزيع الأرقام على الحقول
+      const newOtp = [...otp];
+      otpDigits.forEach((digit, index) => {
+        if (index < 6) {
+          newOtp[index] = digit;
+        }
+      });
+      
+      setOtp(newOtp);
+      
+      // التركيز على الحقل التالي بعد آخر رقم تم لصقه
+      const lastFilledIndex = Math.min(otpDigits.length, 5);
+      if (lastFilledIndex < 5) {
+        document.getElementById(`otp-${lastFilledIndex + 1}`)?.focus();
+      } else {
+        // إذا تم ملء جميع الحقول، التركيز على زر التحقق أو آخر حقل
+        document.getElementById(`otp-${lastFilledIndex}`)?.focus();
+      }
+    } else {
+      // إذا كان النص المنسوخ أقل من 6 أرقام، نضع ما لدينا
+      const otpDigits = cleanedData.split("");
+      const newOtp = [...otp];
+      otpDigits.forEach((digit, index) => {
+        if (index < 6) {
+          newOtp[index] = digit;
+        }
+      });
+      setOtp(newOtp);
+      
+      // التركيز على الحقل التالي
+      const lastFilledIndex = Math.min(otpDigits.length, 5);
+      if (lastFilledIndex < 5) {
+        document.getElementById(`otp-${lastFilledIndex + 1}`)?.focus();
+      }
+      
+      // إظهار رسالة إذا كان الرقم ناقصاً
+      if (cleanedData.length > 0 && cleanedData.length < 6) {
+        toast.error("الرجاء لصق الرمز المكون من 6 أرقام كاملاً", {
+          duration: 2000,
+        });
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const otpValue = otp.join("");
@@ -101,7 +160,6 @@ export default function OTPWithEmail() {
       setCanResend(false);
       setTimeLeft(59);
       setOtp(["", "", "", "", "", ""]);
-      // التركيز على أول حقل
       setTimeout(() => {
         document.getElementById("otp-0")?.focus();
       }, 100);
@@ -116,7 +174,6 @@ export default function OTPWithEmail() {
 
   return (
     <>
-     
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
           <div className="text-center mb-8">
@@ -144,6 +201,8 @@ export default function OTPWithEmail() {
                   value={digit}
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
+                  // ✅ إضافة حدث اللصق
+                  onPaste={handlePaste}
                   disabled={isLoading}
                   className="w-10 h-10 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-[#ff3c27] focus:ring-2 focus:ring-[#ff3c27]/20 outline-none transition-all disabled:opacity-50"
                   maxLength={1}
@@ -174,7 +233,7 @@ export default function OTPWithEmail() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-black text-white rounded-[8px]  hover:bg-gray-800 transition disabled:opacity-50 font-medium"
+              className="w-full py-3 bg-black text-white rounded-[8px] hover:bg-gray-800 transition disabled:opacity-50 font-medium"
             >
               {isLoading ? (
                 <>

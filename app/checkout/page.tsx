@@ -869,16 +869,7 @@ const prepareOrderData = useCallback(() => {
                     {createAccount ? "✅ تم الاختيار" : "إنشاء حساب"}
                   </button>
                 </div>
-                {createAccount && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-xs text-gray-500">
-                      سيتم إنشاء حسابك باستخدام: 
-                      <span className="font-medium text-gray-700 block mt-1">
-                        {accountData.name || "..."} • {accountData.email || "..."} • {accountData.phone || "..."}
-                      </span>
-                    </p>
-                  </div>
-                )}
+               
               </div>
             )}
 

@@ -8,6 +8,7 @@ import {
   useCallback,
   useState,
   memo,
+  useRef,
   type ChangeEvent,
 } from 'react';
 import { getCategories, getColors, getSizes, getBrands } from '@/services/api';
@@ -381,6 +382,14 @@ const ColorSwatchList = memo(function ColorSwatchList({
 
 export default function ProductFilters({ onFilterChange, isMobile = false, onClose }: ProductFiltersProps) {
   const searchParams = useSearchParams();
+  
+  // ✅ استخدام ref لتخزين onFilterChange
+  const onFilterChangeRef = useRef(onFilterChange);
+  
+  useEffect(() => {
+    onFilterChangeRef.current = onFilterChange;
+  }, [onFilterChange]);
+  
   const [state, dispatch] = useReducer(filtersReducer, initialFiltersState);
   const { categories, colors, sizes, brands } = useFilterOptions();
 
@@ -423,11 +432,6 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
 
   const [tempMinPrice, tempMaxPrice] = state.tempPriceRange;
 
-  const appliedFilters = useMemo<AppliedFilters>(
-    () => buildAppliedFilters(state),
-    [state.selectedCategories, state.selectedSubcategories, state.selectedColors, state.selectedSizes, state.selectedBrands, state.appliedPriceRange],
-  );
-
   // ✅ دالة تطبيق الفلاتر (تُستخدم للموبايل والديسكتوب)
   const applyFilters = useCallback(() => {
     dispatch({ type: 'APPLY_ALL_FILTERS' });
@@ -436,21 +440,21 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
       ...state,
       appliedPriceRange: state.tempPriceRange,
     });
-    onFilterChange(filtersToApply);
+    onFilterChangeRef.current(filtersToApply);
     
     if (isMobile && onClose) {
       onClose();
     }
-  }, [state, onFilterChange, isMobile, onClose]);
+  }, [state, isMobile, onClose]);
 
-  // ✅ للديسكتوب: تطبيق الفلاتر فوراً عند التغيير
+  // ✅ للديسكتوب: تطبيق الفلاتر فوراً عند التغيير (ما عدا السعر)
   useEffect(() => {
-    if (!isMobile) {
+    if (!isMobile && onFilterChangeRef.current) {
       const filters = buildAppliedFilters({
         ...state,
-        appliedPriceRange: state.tempPriceRange,
+        appliedPriceRange: state.appliedPriceRange, // ✅ استخدم السعر المطبق وليس المؤقت
       });
-      onFilterChange(filters);
+      onFilterChangeRef.current(filters);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -459,7 +463,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     state.selectedColors,
     state.selectedSizes,
     state.selectedBrands,
-    state.tempPriceRange,
+    state.appliedPriceRange, // ✅ اعتمد على appliedPriceRange بدلاً من tempPriceRange
     isMobile,
   ]);
 
@@ -503,17 +507,24 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     }
   };
 
+  // ✅ تطبيق فلتر السعر فقط عند الضغط على السهم
   const handleApplyPriceFilter = useCallback(() => {
-    if (!isMobile) {
-      dispatch({ type: 'APPLY_PRICE_FILTER' });
-    }
-  }, [isMobile]);
+    // تطبيق السعر في الـ state
+    dispatch({ type: 'APPLY_PRICE_FILTER' });
+    
+    // إرسال الفلاتر مع السعر المطبق إلى المكون الأب
+    const filters = buildAppliedFilters({
+      ...state,
+      appliedPriceRange: state.tempPriceRange, // استخدم القيم المؤقتة كقيم مطبقة
+    });
+    onFilterChangeRef.current(filters);
+  }, [state]);
 
   const handleResetFilters = useCallback(() => {
     dispatch({ type: 'RESET_ALL' });
-    onFilterChange({});
+    onFilterChangeRef.current({});
     if (onClose && isMobile) onClose();
-  }, [onFilterChange, onClose, isMobile]);
+  }, [onClose, isMobile]);
 
   // ✅ حساب عدد الفلاتر المختارة
   const getSelectedFiltersCount = useCallback(() => {
@@ -523,7 +534,11 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
     if (state.selectedColors.length) count += state.selectedColors.length;
     if (state.selectedSizes.length) count += state.selectedSizes.length;
     if (state.selectedBrands.length) count += state.selectedBrands.length;
-    if (state.tempPriceRange[0] > MIN_PRICE || state.tempPriceRange[1] < MAX_PRICE) count++;
+    // ✅ استخدم appliedPriceRange بدلاً من tempPriceRange
+    if (state.appliedPriceRange) {
+      const [min, max] = state.appliedPriceRange;
+      if (min > MIN_PRICE || max < MAX_PRICE) count++;
+    }
     return count;
   }, [state]);
 
@@ -594,11 +609,12 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
                 className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            {/* ✅ زر تطبيق السعر - يعمل فقط عند الضغط عليه */}
             {!isMobile && (
               <div className="mt-4">
                 <button
                   onClick={handleApplyPriceFilter}
-                  className="w-[32.89px] rounded-[7px] bg-[#0A0500] text-white py-2 transition-colors font-semibold flex items-center justify-center gap-2"
+                  className="w-[32.89px] rounded-[7px] bg-[#0A0500] text-white py-2 transition-colors font-semibold flex items-center justify-center gap-2 hover:bg-[#2a2a2a]"
                 >
                   <FaArrowLeft className="w-5 h-5" />
                 </button>
@@ -687,7 +703,6 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
             className="w-full bg-[#EC221F] text-white py-3 rounded-[8px] font-semibold text-base transition-colors hover:bg-[#e0201c] flex items-center justify-center gap-2"
           >
             تطبيق 
-          
           </button>
         </div>
       )}

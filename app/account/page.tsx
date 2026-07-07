@@ -79,37 +79,37 @@ export default function AccountPage() {
   }, [isAuthenticated]);
 
   // التحقق من حالة تسجيل الدخول
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      toast.error("الرجاء تسجيل الدخول أولاً", {
-        duration: 2000,
-        position: "top-center",
-      });
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 1500);
-    }
-  }, [isAuthenticated, loading, router]);
+  // useEffect(() => {
+  //   if (!loading && !isAuthenticated) {
+  //     toast.error("الرجاء تسجيل الدخول أولاً", {
+  //       duration: 2000,
+  //       position: "top-center",
+  //     });
+  //     setTimeout(() => {
+  //       router.push("/auth/login");
+  //     }, 1500);
+  //   }
+  // }, [isAuthenticated, loading, router]);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
 
   const confirmLogout = async () => {
-    setShowLogoutModal(false);
-    
-    await logoutUser();
-    
-    toast.success("تم تسجيل الخروج بنجاح 👋", {
-      duration: 2000,
-      position: "top-center",
-    });
-    
-    setTimeout(() => {
-      router.push("/");
-    }, 1500);
-  };
-
+  setShowLogoutModal(false);
+  
+  await logoutUser();
+  
+  toast.success("تم تسجيل الخروج بنجاح 👋", {
+    duration: 1500,
+    position: "top-center",
+  });
+  
+  // الانتظار قليلاً حتى تظهر رسالة النجاح ثم التوجيه
+  setTimeout(() => {
+    router.push("/");
+  }, 1500);
+};
   const cancelLogout = () => {
     setShowLogoutModal(false);
   };
@@ -154,9 +154,50 @@ export default function AccountPage() {
   }
 
   // إذا لم يكن المستخدم مسجل دخول، لا نعرض المحتوى
-  if (!isAuthenticated || !user) {
-    return null;
-  }
+ if (!isAuthenticated || !user) {
+  return (
+    <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
+      <div className="text-center max-w-md mx-4">
+        <div className="bg-white rounded-2xl p-8 shadow-lg">
+          {/* أيقونة القفل أو المنع */}
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">
+            ! مرحباً بك
+          </h3>
+          <p className="text-gray-600 mb-6 text-lg">
+            يرجى <span className="text-[#ff3c27] font-semibold">تسجيل الدخول</span> أولاً للوصول إلى ملفك الشخصي
+          </p>
+          
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push("/auth/login")}
+              className="w-full px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-[#e63522] transition-all duration-300 font-semibold text-lg shadow-md hover:shadow-lg"
+            >
+              تسجيل الدخول الآن
+            </button>
+            
+            <button
+              onClick={() => router.push("/")}
+              className="w-full px-6 py-2 text-gray-600 hover:text-[#ff3c27] transition-colors duration-300 text-sm"
+            >
+              العودة إلى الصفحة الرئيسية
+            </button>
+          </div>
+        </div>
+        
+        {/* رسالة تأكيد إضافية */}
+        <p className="mt-4 text-sm text-gray-500">
+          🔒 هذا القسم محمي ويتطلب مصادقة
+        </p>
+      </div>
+    </div>
+  );
+}
 
   // الحصول على الحرف الأول من اسم المستخدم للصورة الافتراضية
   const getUserInitial = () => {
