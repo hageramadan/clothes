@@ -50,6 +50,21 @@ export default function OTPWithEmail() {
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    // ✅ التنقل بين الحقول باستخدام الأسهم
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      
+      // تحديد اتجاه التنقل
+      const direction = e.key === "ArrowRight" ? 1 : -1;
+      const newIndex = index + direction;
+      
+      // التحقق من أن الفهرس الجديد ضمن النطاق
+      if (newIndex >= 0 && newIndex < 6) {
+        document.getElementById(`otp-${newIndex}`)?.focus();
+      }
+    }
+    
+    // ✅ حذف الرقم عند الضغط على Backspace
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       document.getElementById(`otp-${index - 1}`)?.focus();
     }
@@ -59,18 +74,11 @@ export default function OTPWithEmail() {
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     
-    // الحصول على النص المنسوخ
     const pastedData = e.clipboardData.getData("text");
-    
-    // إزالة أي مسافات أو أحرف غير رقمية
     const cleanedData = pastedData.replace(/\s/g, "").replace(/[^0-9]/g, "");
     
-    // التأكد من أن النص يحتوي على 6 أرقام على الأقل
     if (cleanedData.length >= 6) {
-      // أخذ أول 6 أرقام فقط
       const otpDigits = cleanedData.slice(0, 6).split("");
-      
-      // توزيع الأرقام على الحقول
       const newOtp = [...otp];
       otpDigits.forEach((digit, index) => {
         if (index < 6) {
@@ -80,16 +88,13 @@ export default function OTPWithEmail() {
       
       setOtp(newOtp);
       
-      // التركيز على الحقل التالي بعد آخر رقم تم لصقه
       const lastFilledIndex = Math.min(otpDigits.length, 5);
       if (lastFilledIndex < 5) {
         document.getElementById(`otp-${lastFilledIndex + 1}`)?.focus();
       } else {
-        // إذا تم ملء جميع الحقول، التركيز على زر التحقق أو آخر حقل
         document.getElementById(`otp-${lastFilledIndex}`)?.focus();
       }
     } else {
-      // إذا كان النص المنسوخ أقل من 6 أرقام، نضع ما لدينا
       const otpDigits = cleanedData.split("");
       const newOtp = [...otp];
       otpDigits.forEach((digit, index) => {
@@ -99,17 +104,43 @@ export default function OTPWithEmail() {
       });
       setOtp(newOtp);
       
-      // التركيز على الحقل التالي
       const lastFilledIndex = Math.min(otpDigits.length, 5);
       if (lastFilledIndex < 5) {
         document.getElementById(`otp-${lastFilledIndex + 1}`)?.focus();
       }
       
-      // إظهار رسالة إذا كان الرقم ناقصاً
       if (cleanedData.length > 0 && cleanedData.length < 6) {
         toast.error("الرجاء لصق الرمز المكون من 6 أرقام كاملاً", {
           duration: 2000,
         });
+      }
+    }
+  };
+
+  // ✅ دالة التعامل مع حدث Paste على مستوى الحاوية
+  const handleContainerPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    // منع التعامل مع اللصق على المستوى العام
+    e.preventDefault();
+    
+    const pastedData = e.clipboardData.getData("text");
+    const cleanedData = pastedData.replace(/\s/g, "").replace(/[^0-9]/g, "");
+    
+    if (cleanedData.length >= 6) {
+      const otpDigits = cleanedData.slice(0, 6).split("");
+      const newOtp = [...otp];
+      otpDigits.forEach((digit, index) => {
+        if (index < 6) {
+          newOtp[index] = digit;
+        }
+      });
+      
+      setOtp(newOtp);
+      
+      const lastFilledIndex = Math.min(otpDigits.length, 5);
+      if (lastFilledIndex < 5) {
+        document.getElementById(`otp-${lastFilledIndex + 1}`)?.focus();
+      } else {
+        document.getElementById(`otp-${lastFilledIndex}`)?.focus();
       }
     }
   };
@@ -190,7 +221,11 @@ export default function OTPWithEmail() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="flex justify-between md:gap-2 mb-6 flex-row-reverse">
+            {/* ✅ حاوية الـ OTP مع دعم اللصق */}
+            <div 
+              className="flex justify-between md:gap-2 mb-6 flex-row-reverse"
+              onPaste={handleContainerPaste}
+            >
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -201,7 +236,6 @@ export default function OTPWithEmail() {
                   value={digit}
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  // ✅ إضافة حدث اللصق
                   onPaste={handlePaste}
                   disabled={isLoading}
                   className="w-10 h-10 md:w-14 md:h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:border-[#ff3c27] focus:ring-2 focus:ring-[#ff3c27]/20 outline-none transition-all disabled:opacity-50"

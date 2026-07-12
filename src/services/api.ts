@@ -830,12 +830,19 @@ export async function registerWithEmail(data: RegisterWithEmailRequest): Promise
       body: JSON.stringify(data),
     });
 
+    const results: AuthResponse = await response.json();
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return {
+        result: results.result || false,
+        errNum: results.errNum || response.status,
+        message: results.message || `(${response.status})`,
+        data: results.data || null,
+      };
     }
 
-    const result: AuthResponse = await response.json();
-    return result;
+    
+    return results;
   } catch (error) {
     console.error('Error in registerWithEmail:', error);
     return {

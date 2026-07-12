@@ -430,6 +430,7 @@ export default function ReturnsPage() {
         {/* العنوان */}
         <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <RefreshCw className="w-6 h-6 sm:w-7 sm:h-7 text-[#EC221F]" />
+          
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">المرتجعات</h1>
          
         </div>
@@ -458,7 +459,10 @@ export default function ReturnsPage() {
         <div className="space-y-3 sm:space-y-4">
           {filteredReturns.length === 0 ? (
             <div className="mt-8 md:mt-12 rounded-2xl p-8 sm:p-12 text-center">
-              <RefreshCw className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+              {/* <RefreshCw className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" /> */}
+               <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                <RefreshCw className="w-12 h-12 text-gray-400" />
+              </div>
               <p className="text-gray-500 text-sm sm:text-base">
                 {returns.length === 0 ? "لا توجد مرتجعات حتى الآن" : "لا توجد مرتجعات في هذه الفئة"}
               </p>

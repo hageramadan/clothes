@@ -136,45 +136,20 @@ const getHeaders = (): HeadersInit => {
 
 const PLACEHOLDER_IMAGE = "/images/placeholder-product.png";
 
-// ✅ متغيرات لمنع التكرار على مستوى الدالة
-let isFetching = false;
-let lastFetchTime = 0;
-
-// ========== دالة جلب الطلبات ==========
-const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ orders: Order[], pagination: PaginationData }> => {
-  const now = Date.now();
-  if (isFetching || (now - lastFetchTime < 300)) {
-    console.log("⏳ Skipping duplicate fetch request");
-    return {
-      orders: [],
-      pagination: {
-        current_page: 1,
-        last_page: 1,
-        per_page: 10,
-        total: 0,
-        from: 0,
-        to: 0,
-        next_page: null,
-        previous_page: null
-      }
-    };
-  }
-  
-  isFetching = true;
-  lastFetchTime = now;
-  
+// ========== دالة جلب الطلبات (بدون منع تكرار) ==========
+const fetchOrders = async (page: number = 1, perPage: number = 10, signal?: AbortSignal): Promise<{ orders: Order[], pagination: PaginationData }> => {
   try {
     console.log(`🟢 Fetching orders page ${page}`);
     const response = await fetch(`${API_URL}/orders?page=${page}&per_page=${perPage}`, {
       method: "GET",
       headers: getHeaders(),
+      signal: signal, // دعم إلغاء الطلب
     });
 
     const data = await response.json();
     console.log(`📥 Response for page ${page}:`, data);
 
     if (data.result === true && data.data) {
-      // ✅ تحويل البيانات بشكل آمن
       const orders = data.data.orders.map((order: any) => {
         try {
           return transformOrder(order);
@@ -210,6 +185,23 @@ const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ or
       }
     };
   } catch (error) {
+    // تجاهل أخطاء الإلغاء
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.log('🔄 Request was aborted');
+      return {
+        orders: [],
+        pagination: {
+          current_page: 1,
+          last_page: 1,
+          per_page: 10,
+          total: 0,
+          from: 0,
+          to: 0,
+          next_page: null,
+          previous_page: null
+        }
+      };
+    }
     console.error("❌ Error fetching orders:", error);
     toast.error("حدث خطأ في جلب الطلبات");
     return {
@@ -225,8 +217,6 @@ const fetchOrders = async (page: number = 1, perPage: number = 10): Promise<{ or
         previous_page: null
       }
     };
-  } finally {
-    isFetching = false;
   }
 };
 
@@ -286,9 +276,7 @@ const getColor = (item: OrderItem): { name: string; hex: string | null } | null 
   };
 };
 
-// ========== تحويل بيانات الطلب بشكل آمن ==========
 const transformOrder = (apiOrder: any): Order => {
-  // ✅ التحقق من وجود البيانات الأساسية
   if (!apiOrder || !apiOrder.id) {
     console.warn("⚠️ Invalid order data:", apiOrder);
     return {
@@ -400,50 +388,54 @@ export default function OrdersPage() {
   });
   const router = useRouter();
   
-  const hasLoadedRef = useRef(false);
+  // ✅ استخدام AbortController لإلغاء الطلبات القديمة
   const abortControllerRef = useRef<AbortController | null>(null);
   const itemsPerPage = 10;
 
-  // ========== جلب الطلبات ==========
+  // ========== جلب الطلبات مع AbortController ==========
   const loadOrders = useCallback(async (page: number = 1) => {
-    // ✅ إلغاء الطلب السابق
+    // ✅ إلغاء الطلب السابق إذا كان موجوداً
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
     
-    abortControllerRef.current = new AbortController();
+    // ✅ إنشاء AbortController جديد
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     
     setLoading(true);
+    
     try {
-      const result = await fetchOrders(page, itemsPerPage);
+      // ✅ تمرير signal لـ fetchOrders
+      const result = await fetchOrders(page, itemsPerPage, controller.signal);
       
-      if (!abortControllerRef.current?.signal.aborted) {
+      // ✅ التحقق من عدم إلغاء الطلب قبل تحديث الحالة
+      if (!controller.signal.aborted) {
         console.log(`🟢 Setting orders for page ${page}:`, result.orders.length);
         console.log(`📊 Setting pagination:`, result.pagination);
         
         setOrders(result.orders);
         setPagination(result.pagination);
-        hasLoadedRef.current = true;
+        setLoading(false);
       }
     } catch (error) {
-      if (!abortControllerRef.current?.signal.aborted) {
+      // ✅ تجاهل أخطاء الإلغاء
+      if (error instanceof Error && error.name !== 'AbortError') {
         console.error("❌ Error loading orders:", error);
         toast.error("حدث خطأ في تحميل الطلبات");
-      }
-    } finally {
-      if (!abortControllerRef.current?.signal.aborted) {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
   }, [itemsPerPage]);
 
   // ========== تحميل الصفحة الأولى ==========
   useEffect(() => {
-    if (!hasLoadedRef.current) {
-      console.log("🟢 Loading orders for the first time");
-      loadOrders(1);
-    }
+    console.log("🟢 Loading orders for the first time");
+    loadOrders(1);
     
+    // ✅ تنظيف: إلغاء أي طلب معلق عند إلغاء تحميل المكون
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -504,7 +496,6 @@ export default function OrdersPage() {
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EC221F] mx-auto"></div>
-              {/* <p className="text-gray-500 mt-4">جاري تحميل الطلبات...</p> */}
             </div>
           </div>
         </div>
@@ -521,7 +512,6 @@ export default function OrdersPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
             طلباتي
           </h1>
-         
         </div>
 
         {/* فلتر الحالات */}
@@ -548,9 +538,11 @@ export default function OrdersPage() {
         <div className="space-y-3 sm:space-y-4">
           {filteredOrders.length === 0 ? (
             <div className="mt-8 md:mt-12 rounded-2xl p-8 sm:p-12 text-center">
-              <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Package className="w-12 h-12 text-gray-400" />
+              </div>
               <p className="text-gray-500 text-sm sm:text-base">
-                {orders.length === 0 ? "جاري تحميل الطلبات..." : "لا توجد طلبات في هذه الفئة"}
+                {orders.length === 0 ? "لا توجد طلبات" : "لا توجد طلبات في هذه الفئة"}
               </p>
             </div>
           ) : (
@@ -745,7 +737,7 @@ export default function OrdersPage() {
           )}
         </div>
 
-        {/* ✅ مكون Pagination */}
+        {/* Pagination */}
         {pagination.last_page > 1 && (
           <Pagination
             currentPage={pagination.current_page}
@@ -758,7 +750,7 @@ export default function OrdersPage() {
 
       <style jsx global>{`
         .status-ordered {
-         background-color: #f181173D; color: #f18117; 
+          background-color: #f181173D; color: #f18117; 
         }
         .status-processing {
           background-color: #ed89363d;
