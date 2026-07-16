@@ -246,15 +246,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const response = await clearCart();
       
       if (response.result === true) {
-        toast.success('تم تفريغ السلة بنجاح');
+        // toast.success('تم تفريغ السلة بنجاح');
         await fetchCartData(false);
         return true;
       } else {
-        toast.error(response.message || 'فشل في تفريغ السلة');
+        // toast.error(response.message || 'فشل في تفريغ السلة');
         return false;
       }
     } catch (error) {
-      toast.error('حدث خطأ في تفريغ السلة');
+      // toast.error('حدث خطأ في تفريغ السلة');
       return false;
     } finally {
       setIsMutating(false);

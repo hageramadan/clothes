@@ -109,10 +109,10 @@ export function CartPage() {
           name: item.product.name,
           brand: getBrandObject(item.product),
           price: item.final_price,
-          originalPrice: item.product.pricing?.has_discount ? item.product.pricing.price : undefined,
-          image: cleanImageUrl(displayImage), // الصورة المعروضة (صورة اللون المختار أو الرئيسية)
-          variantImage: variantImage ? cleanImageUrl(variantImage) : null, // صورة الـ variant بشكل منفصل
-          productImage: cleanImageUrl(productMainImage), // الصورة الرئيسية للمنتج
+          originalPrice: item.price ,
+          image: cleanImageUrl(displayImage), 
+          variantImage: variantImage ? cleanImageUrl(variantImage) : null, 
+          productImage: cleanImageUrl(productMainImage), 
           color: color,
           size: size,
           quantity: item.quantity,

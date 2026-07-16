@@ -576,9 +576,10 @@ export default function OrdersPage() {
                             <div className="flex gap-1 sm:gap-2 items-center">
                               <p className="font-bold text-gray-800 text-sm sm:text-base">
                                 <span>
-                                  {order.orderNumber.length > 10
+                                  {/* {order.orderNumber.length > 10
                                     ? order.orderNumber.substring(0, 10) + "..."
-                                    : order.orderNumber}
+                                    : order.orderNumber} */}
+                                    {order.orderNumber}
                                 </span>
                               </p>
                               <IoCopyOutline

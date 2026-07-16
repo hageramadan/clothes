@@ -7,11 +7,13 @@ import { useState, useEffect } from "react";
 interface PaymentMethodFormProps {
   paymentMethod: string;
   onPaymentMethodChange: (method: string) => void;
+  onPaymentGatewayChange?: (gateway: string | null) => void; // ✅ إضافة هذا السطر فقط
 }
 
 export default function PaymentMethodForm({
   paymentMethod,
   onPaymentMethodChange,
+  onPaymentGatewayChange, // ✅ إضافة هذا السطر فقط
 }: PaymentMethodFormProps) {
   const [isWalletAvailable, setIsWalletAvailable] = useState(true);
 
@@ -28,13 +30,13 @@ export default function PaymentMethodForm({
       case "wallet":
         return "wallet";
       case "cash":
-        return "cash";
+        return null; // ✅ تعديل: الكاش مش محتاج gateway
       case "card":
-        return "card";
+        return "paymob"; // ✅ تعديل: كارد → paymob
       case "mada":
         return "mada";
       default:
-        return "";
+        return null;
     }
   };
 
@@ -42,11 +44,10 @@ export default function PaymentMethodForm({
   const handlePaymentChange = (method: string) => {
     onPaymentMethodChange(method);
     
-    // إذا كانت الطريقة هي المحفظة، نضيف payment_gateway: "wallet"
-    if (method === "wallet") {
-      // يمكنك إرسال البيانات إلى الـ parent component
-      // أو تخزينها في state محلي
-      console.log("Payment gateway:", getPaymentGateway(method));
+    // ✅ إضافة: إرسال الـ gateway للـ parent
+    const gateway = getPaymentGateway(method);
+    if (onPaymentGatewayChange) {
+      onPaymentGatewayChange(gateway);
     }
   };
 
@@ -107,7 +108,7 @@ export default function PaymentMethodForm({
         </label>
 
         {/* بطاقة ائتمان */}
-        {/* <label
+        <label
           className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition ${
             paymentMethod === "card"
               ? "border-[#EC221F] bg-red-50"
@@ -126,7 +127,7 @@ export default function PaymentMethodForm({
           <div>
             <p className="font-medium text-gray-800">بطاقة ائتمان</p>
           </div>
-        </label> */}
+        </label>
 
         {/* مدى (Mada) */}
         {/* <label

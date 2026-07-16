@@ -595,7 +595,7 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
               <label className="block text-xs text-gray-500 mb-1">الحد الأقصى</label>
               <input
                 type="number"
-                value={tempMaxPrice}
+                 value={tempMaxPrice === 0 ? "" : tempMaxPrice} 
                 onChange={handleMaxPriceInputChange}
                 className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />

@@ -165,13 +165,13 @@ export function PromoCodeInput({ onApply, onRemove, appliedCode }: PromoCodeInpu
             <span className="text-green-600 text-sm">✓ تم تطبيق الكود</span>
             <span className="text-green-800 font-semibold text-sm">{appliedCode}</span>
           </div>
-          <button
+          {/* <button
             onClick={handleRemove}
             disabled={isLoading}
             className="text-gray-400 hover:text-red-500 transition disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-          </button>
+          </button> */}
         </div>
         {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
       </div>

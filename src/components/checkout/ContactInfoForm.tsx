@@ -129,6 +129,9 @@ export default function ContactInfoForm({
         
         {/* حقل رقم الجوال باستخدام PhoneInput المتطور */}
         <div>
+           <label className="block text-sm font-medium text-gray-700 mb-1">
+             رقم الهاتف <span className="text-red-500">*</span>
+          </label>
           <PhoneInput
             value={formData.phone || ""}
             onChange={handlePhoneChange}
