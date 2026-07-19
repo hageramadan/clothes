@@ -820,6 +820,8 @@ interface LogoutResponse {
   data: null;
 }
 
+// ========== دوال المصادقة المعدلة ==========
+
 export async function registerWithEmail(data: RegisterWithEmailRequest): Promise<AuthResponse> {
   try {
     const response = await fetch(`${API_URL}/auth/register`, {
@@ -841,7 +843,6 @@ export async function registerWithEmail(data: RegisterWithEmailRequest): Promise
       };
     }
 
-    
     return results;
   } catch (error) {
     console.error('Error in registerWithEmail:', error);
@@ -864,12 +865,18 @@ export async function registerWithPhone(data: RegisterWithPhoneRequest): Promise
       body: JSON.stringify(data),
     });
 
+    const results: AuthResponse = await response.json();
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return {
+        result: results.result || false,
+        errNum: results.errNum || response.status,
+        message: results.message || `(${response.status})`,
+        data: results.data || null,
+      };
     }
 
-    const result: AuthResponse = await response.json();
-    return result;
+    return results;
   } catch (error) {
     console.error('Error in registerWithPhone:', error);
     return {
@@ -891,11 +898,10 @@ export async function loginWithEmail(data: LoginWithEmailRequest): Promise<AuthR
       body: JSON.stringify(data),
     });
 
-     const results: AuthResponse = await response.json();
-    
+    const results: AuthResponse = await response.json();
 
     if (!response.ok) {
-        return {
+      return {
         result: results.result || false,
         errNum: results.errNum || response.status,
         message: results.message || `فشل في تسجيل الدخول (${response.status})`,
@@ -903,7 +909,6 @@ export async function loginWithEmail(data: LoginWithEmailRequest): Promise<AuthR
       };
     }
 
-    // const result: AuthResponse = await response;
     return results;
   } catch (error) {
     console.error('Error in loginWithEmail:', error);
@@ -926,12 +931,18 @@ export async function loginWithPhone(data: LoginWithPhoneRequest): Promise<AuthR
       body: JSON.stringify(data),
     });
 
+    const results: AuthResponse = await response.json();
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return {
+        result: results.result || false,
+        errNum: results.errNum || response.status,
+        message: results.message || `فشل في تسجيل الدخول (${response.status})`,
+        data: results.data || null,
+      };
     }
 
-    const result: AuthResponse = await response.json();
-    return result;
+    return results;
   } catch (error) {
     console.error('Error in loginWithPhone:', error);
     return {
@@ -1344,27 +1355,40 @@ export async function updateUserProfile(data: UpdateProfileRequest): Promise<Upd
       });
     }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    // if (!response.ok) {
+    //   throw new Error(`HTTP error! status: ${response.status}`);
+    // }
 
-    const result: UpdateProfileResponse = await response.json();
+    // const result: UpdateProfileResponse = await response.json();
     
-    if (result.result && result.errNum === 200 && result.data?.user) {
+   
+    
+    const results: UpdateProfileResponse = await response.json();
+ if (results.result && results.errNum === 200 && results.data?.user) {
       const currentUserData = getUserData();
       if (currentUserData) {
         const updatedUserData = {
           ...currentUserData,
           user: {
             ...currentUserData.user,
-            ...result.data.user
+            ...results.data.user
           }
         };
         saveUserData(updatedUserData);
       }
     }
+    if (!response.ok) {
+      return {
+        result: results.result || false,
+        errNum: results.errNum || response.status,
+        message: results.message || `(${response.status})`,
+        data: results.data || null,
+      };
+    }
+
+    return results;
     
-    return result;
+    // return result;
   } catch (error) {
     console.error('Error in updateUserProfile:', error);
     return {
@@ -1449,10 +1473,6 @@ export async function updateProfileImage(imageFile: File): Promise<UpdateProfile
 export async function updateUserLocale(locale: string): Promise<UpdateProfileResponse> {
   return updateUserProfile({ locale });
 }
-
-// src/services/api.ts
-
-// ... (باقي الكود الموجود لديك) ...
 
 // ========== واجهات (Interfaces) الأقسام ==========
 export interface SectionResponse {
