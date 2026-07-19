@@ -14,6 +14,14 @@ interface SettingsData {
     whatsapp: string;
     email: string;
     phone: string;
+    logo?: string;
+    main_color?: string;
+    secondary_color?: string;
+    template_id?: number;
+    meta: {
+      meta_title: string | null;
+      meta_description: string | null;
+    };
   };
 }
 

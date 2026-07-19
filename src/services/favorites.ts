@@ -82,7 +82,6 @@ const extractColorsFromVariants = (variants: ProductVariant[]): Array<{ color: s
     }
   });
   
-  
   return Array.from(colorMap.entries()).map(([name, color]) => ({
     name: name,
     color: color
@@ -120,14 +119,11 @@ export const transformFavoriteToProductCard = (favorite: FavoriteProduct | null 
     };
   }
 
-
-
   // ✅ استخراج الألوان من الـ variants
   let colors: Array<{ color: string; name: string }> = [];
   
   if (favorite.has_variants && favorite.variants && Array.isArray(favorite.variants) && favorite.variants.length > 0) {
     colors = extractColorsFromVariants(favorite.variants as ProductVariant[]);
-  } else {
   }
 
   // معالجة الصور
@@ -166,11 +162,10 @@ export const transformFavoriteToProductCard = (favorite: FavoriteProduct | null 
     addedDate: new Date().toISOString(),
   };
   
-  
   return result;
 };
 
-// باقي الكود كما هو...
+// ===================== باقي الكود =====================
 const API_URL = 'https://dukanah.admin.t-carts.com/api';
 
 const getToken = (): string | null => {
@@ -184,41 +179,115 @@ const getHeaders = (): HeadersInit => {
   const token = getToken();
   return {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }),
   };
 };
 
+// ✅ الدالة المعدلة - الأهم
 export const fetchFavorites = async (
   page: number = 1,
   perPage: number = 10
 ): Promise<any> => {
   const token = getToken();
 
-  // ✅ لو مفيش توكن متعمليش API Call
+  // ✅ لو مفيش توكن أرجع مصفوفة فارغة مع result: true
   if (!token) {
+    console.log('🔴 No token found, returning empty favorites');
     return {
-      result: false,
+      result: true,  // ✅ تغيير من false إلى true
       data: {
         favorites: [],
-        pagination: null,
+        pagination: {
+          current_page: 1,
+          last_page: 1,
+          per_page: perPage,
+          total: 0,
+          from: 0,
+          to: 0,
+        },
       },
     };
   }
 
   try {
+    console.log(`🔄 Fetching favorites: page=${page}, perPage=${perPage}`);
+    
     const response = await fetch(
       `${API_URL}/user-favorites?page=${page}&per_page=${perPage}`,
       {
         method: "GET",
         headers: getHeaders(),
+        cache: 'no-store', // ✅ منع التخزين المؤقت
       }
     );
 
+    // ✅ التحقق من حالة الاستجابة
+    if (!response.ok) {
+      console.error(`❌ HTTP Error: ${response.status}`);
+      
+      // ✅ إذا كان التوكن غير صالح (401)
+      if (response.status === 401) {
+        localStorage.removeItem('auth_token');
+        return {
+          result: true,
+          data: {
+            favorites: [],
+            pagination: {
+              current_page: 1,
+              last_page: 1,
+              per_page: perPage,
+              total: 0,
+              from: 0,
+              to: 0,
+            },
+          },
+        };
+      }
+      
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
-    return data;
+    console.log('📦 Favorites API response:', data);
+    
+    // ✅ التأكد من هيكل البيانات
+    if (data.result === true && data.data) {
+      return data;
+    } else {
+      // ✅ إذا كانت البيانات غير صحيحة، أرجع مصفوفة فارغة
+      return {
+        result: true,
+        data: {
+          favorites: data.data?.favorites || [],
+          pagination: data.data?.pagination || {
+            current_page: 1,
+            last_page: 1,
+            per_page: perPage,
+            total: 0,
+            from: 0,
+            to: 0,
+          },
+        },
+      };
+    }
   } catch (error) {
     console.error("❌ خطأ في جلب المفضلة:", error);
-    throw error;
+    // ✅ إرجاع مصفوفة فارغة بدلاً من رمي الخطأ
+    return {
+      result: true,
+      data: {
+        favorites: [],
+        pagination: {
+          current_page: 1,
+          last_page: 1,
+          per_page: perPage,
+          total: 0,
+          from: 0,
+          to: 0,
+        },
+      },
+    };
   }
 };
 
@@ -289,6 +358,10 @@ export const clearAllFavorites = async (): Promise<boolean> => {
         break;
       }
     } while (currentPage <= lastPage);
+    
+    if (allFavorites.length === 0) {
+      return true; // ✅ لا يوجد منتجات للحذف
+    }
     
     const deletePromises = allFavorites.map(item => removeFromFavorites(item.id));
     const results = await Promise.all(deletePromises);

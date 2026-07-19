@@ -136,15 +136,52 @@ const getHeaders = (): HeadersInit => {
 
 const PLACEHOLDER_IMAGE = "/images/placeholder-product.png";
 
-// ========== دالة جلب الطلبات (بدون منع تكرار) ==========
+// ========== دالة جلب الطلبات ==========
 const fetchOrders = async (page: number = 1, perPage: number = 10, signal?: AbortSignal): Promise<{ orders: Order[], pagination: PaginationData }> => {
   try {
+    const token = getToken();
+    
+    if (!token) {
+      console.warn("⚠️ No token found - user is not logged in");
+      return {
+        orders: [],
+        pagination: {
+          current_page: 1,
+          last_page: 1,
+          per_page: 10,
+          total: 0,
+          from: 0,
+          to: 0,
+          next_page: null,
+          previous_page: null
+        }
+      };
+    }
+
     console.log(`🟢 Fetching orders page ${page}`);
     const response = await fetch(`${API_URL}/orders?page=${page}&per_page=${perPage}`, {
       method: "GET",
       headers: getHeaders(),
-      signal: signal, // دعم إلغاء الطلب
+      signal: signal,
     });
+
+    if (response.status === 401) {
+      console.warn("⚠️ Unauthorized - token expired or invalid");
+      localStorage.removeItem("auth_token");
+      return {
+        orders: [],
+        pagination: {
+          current_page: 1,
+          last_page: 1,
+          per_page: 10,
+          total: 0,
+          from: 0,
+          to: 0,
+          next_page: null,
+          previous_page: null
+        }
+      };
+    }
 
     const data = await response.json();
     console.log(`📥 Response for page ${page}:`, data);
@@ -185,7 +222,6 @@ const fetchOrders = async (page: number = 1, perPage: number = 10, signal?: Abor
       }
     };
   } catch (error) {
-    // تجاهل أخطاء الإلغاء
     if (error instanceof Error && error.name === 'AbortError') {
       console.log('🔄 Request was aborted');
       return {
@@ -203,7 +239,6 @@ const fetchOrders = async (page: number = 1, perPage: number = 10, signal?: Abor
       };
     }
     console.error("❌ Error fetching orders:", error);
-    toast.error("حدث خطأ في جلب الطلبات");
     return {
       orders: [],
       pagination: {
@@ -386,30 +421,47 @@ export default function OrdersPage() {
     next_page: null,
     previous_page: null
   });
-  const router = useRouter();
   
-  // ✅ استخدام AbortController لإلغاء الطلبات القديمة
+  // ✅ حالة لتتبع ما إذا كان المستخدم مسجل دخول
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  
+  const router = useRouter();
   const abortControllerRef = useRef<AbortController | null>(null);
   const itemsPerPage = 10;
 
-  // ========== جلب الطلبات مع AbortController ==========
+  // ========== التحقق من تسجيل الدخول ==========
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+      setLoading(false);
+    }
+  }, []);
+
+  // ========== جلب الطلبات ==========
   const loadOrders = useCallback(async (page: number = 1) => {
-    // ✅ إلغاء الطلب السابق إذا كان موجوداً
+    const token = getToken();
+    if (!token) {
+      console.warn("⚠️ User not logged in - skipping orders fetch");
+      setIsLoggedIn(false);
+      setLoading(false);
+      return;
+    }
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
     
-    // ✅ إنشاء AbortController جديد
     const controller = new AbortController();
     abortControllerRef.current = controller;
     
     setLoading(true);
     
     try {
-      // ✅ تمرير signal لـ fetchOrders
       const result = await fetchOrders(page, itemsPerPage, controller.signal);
       
-      // ✅ التحقق من عدم إلغاء الطلب قبل تحديث الحالة
       if (!controller.signal.aborted) {
         console.log(`🟢 Setting orders for page ${page}:`, result.orders.length);
         console.log(`📊 Setting pagination:`, result.pagination);
@@ -419,7 +471,6 @@ export default function OrdersPage() {
         setLoading(false);
       }
     } catch (error) {
-      // ✅ تجاهل أخطاء الإلغاء
       if (error instanceof Error && error.name !== 'AbortError') {
         console.error("❌ Error loading orders:", error);
         toast.error("حدث خطأ في تحميل الطلبات");
@@ -430,12 +481,21 @@ export default function OrdersPage() {
     }
   }, [itemsPerPage]);
 
-  // ========== تحميل الصفحة الأولى ==========
+  // ========== تحميل الصفحة ==========
   useEffect(() => {
-    console.log("🟢 Loading orders for the first time");
+    console.log("🟢 Checking login status and loading orders");
+    
+    const token = getToken();
+    if (!token) {
+      console.log("🚫 No token found - showing login required message");
+      setIsLoggedIn(false);
+      setLoading(false);
+      return;
+    }
+    
+    setIsLoggedIn(true);
     loadOrders(1);
     
-    // ✅ تنظيف: إلغاء أي طلب معلق عند إلغاء تحميل المكون
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -489,6 +549,53 @@ export default function OrdersPage() {
     { value: "cancelled", label: "ملغي" },
   ];
 
+  // ✅ عرض رسالة تسجيل الدخول بالتصميم المطلوب
+  if (isLoggedIn === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center">
+        <div className="text-center max-w-md mx-4">
+          <div className="bg-white rounded-2xl p-8 shadow-lg">
+            {/* أيقونة القفل أو المنع */}
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+              <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              ! مرحباً بك
+            </h3>
+            <p className="text-gray-600 mb-6 text-lg">
+              يرجى <span className="text-[#ff3c27] font-semibold">تسجيل الدخول</span> أولاً للوصول إلى  الطلبات
+            </p>
+            
+            <div className="space-y-3">
+              <button
+                onClick={() => router.push("/auth/login")}
+                className="w-full px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-[#e63522] transition-all duration-300 font-semibold text-lg shadow-md hover:shadow-lg"
+              >
+                تسجيل الدخول الآن
+              </button>
+              
+              <button
+                onClick={() => router.push("/")}
+                className="w-full px-6 py-2 text-gray-600 hover:text-[#ff3c27] transition-colors duration-300 text-sm"
+              >
+                العودة إلى الصفحة الرئيسية
+              </button>
+            </div>
+          </div>
+          
+          {/* رسالة تأكيد إضافية */}
+          <p className="mt-4 text-sm text-gray-500">
+            🔒 هذا القسم محمي ويتطلب مصادقة
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ عرض حالة التحميل
   if (loading) {
     return (
       <div className="bg-gradient-to-l min-h-screen from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
@@ -503,6 +610,7 @@ export default function OrdersPage() {
     );
   }
 
+  // ✅ عرض الطلبات إذا كان المستخدم مسجل دخول
   return (
     <div className="bg-gradient-to-l min-h-screen from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 py-4 md:py-6">
@@ -576,10 +684,7 @@ export default function OrdersPage() {
                             <div className="flex gap-1 sm:gap-2 items-center">
                               <p className="font-bold text-gray-800 text-sm sm:text-base">
                                 <span>
-                                  {/* {order.orderNumber.length > 10
-                                    ? order.orderNumber.substring(0, 10) + "..."
-                                    : order.orderNumber} */}
-                                    {order.orderNumber}
+                                  {order.orderNumber}
                                 </span>
                               </p>
                               <IoCopyOutline

@@ -34,18 +34,54 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   
   const favoritesMapRef = useRef<Map<string, boolean>>(new Map());
   const isMountedRef = useRef(true);
+  const initialFetchDone = useRef(false);
+  const isFetchingRef = useRef(false); // ✅ منع التكرار
+  const lastFetchTimeRef = useRef(0); // ✅ تتبع وقت آخر جلب
 
+  // ✅ دالة جلب البيانات المحسنة مع منع التكرار
   const fetchData = useCallback(async (showLoading: boolean = true) => {
-    if (showLoading) setIsLoading(true);
+    // ✅ منع الجلب المتكرر خلال فترة قصيرة
+    const now = Date.now();
+    if (isFetchingRef.current) {
+      console.log('⏳ Fetch already in progress, skipping...');
+      return;
+    }
+    
+    // ✅ منع الجلب المتكرر خلال 2 ثانية
+    if (now - lastFetchTimeRef.current < 2000) {
+      console.log('⏳ Too soon to fetch again, skipping...');
+      return;
+    }
+
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      console.log('🔴 No auth token found, skipping favorites fetch');
+      if (isMountedRef.current) {
+        setFavorites([]);
+        setTotal(0);
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    isFetchingRef.current = true;
+    lastFetchTimeRef.current = now;
+
+    if (showLoading) {
+      setIsLoading(true);
+    }
+    
     try {
+      console.log('🔄 Fetching favorites...');
       const response = await fetchFavorites(1, 100);
+      console.log('📦 Favorites response:', response);
       
       if (response.result === true && response.data && Array.isArray(response.data.favorites)) {
         const validFavorites = response.data.favorites.filter((item: FavoriteProduct) => item && item.id);
         
         if (isMountedRef.current) {
-         
-          setFavorites([...validFavorites]); // استخدام spread لإنشاء مصفوفة جديدة
+          console.log(`✅ Loaded ${validFavorites.length} favorites`);
+          setFavorites([...validFavorites]);
           setTotal(validFavorites.length);
           
           const newMap = new Map<string, boolean>();
@@ -55,23 +91,119 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
             }
           });
           favoritesMapRef.current = newMap;
+          
+          // ✅ إطلاق حدث لتحديث العدد في الناف بار
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('favoritesCountUpdated'));
+          }
+        }
+      } else {
+        if (isMountedRef.current) {
+          setFavorites([]);
+          setTotal(0);
+          favoritesMapRef.current = new Map();
+          
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('favoritesCountUpdated'));
+          }
         }
       }
     } catch (error) {
-      console.error('خطأ في جلب المفضلة:', error);
+      console.error('❌ Error fetching favorites:', error);
+      if (isMountedRef.current) {
+        setFavorites([]);
+        setTotal(0);
+      }
     } finally {
-      if (showLoading && isMountedRef.current) {
+      if (isMountedRef.current) {
         setIsLoading(false);
       }
+      isFetchingRef.current = false;
     }
   }, []);
 
+  // ✅ جلب البيانات عند تحميل المكون (مرة واحدة فقط)
   useEffect(() => {
     isMountedRef.current = true;
-    fetchData();
+    
+    if (!initialFetchDone.current) {
+      initialFetchDone.current = true;
+      // ✅ تأخير صغير لتجنب التزاحم مع أحداث أخرى
+      setTimeout(() => {
+        fetchData(true);
+      }, 100);
+    }
     
     return () => {
       isMountedRef.current = false;
+    };
+  }, [fetchData]);
+
+  // ✅ الاستماع لأحداث تسجيل الدخول مع منع التكرار
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        console.log('🔄 Auth changed, fetching favorites...');
+        // ✅ تأخير صغير لتجنب التكرار
+        setTimeout(() => {
+          fetchData(true);
+        }, 200);
+      } else {
+        setFavorites([]);
+        setTotal(0);
+        favoritesMapRef.current = new Map();
+      }
+    };
+
+    const handleUserLoggedIn = () => {
+      console.log('🔄 User logged in event received, fetching favorites...');
+      // ✅ تأخير صغير لتجنب التكرار
+      setTimeout(() => {
+        fetchData(true);
+      }, 200);
+    };
+
+    // ✅ استخدام debounce لتجميع الأحداث
+    let timeoutId: NodeJS.Timeout;
+    const handleDebouncedFetch = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        fetchData(true);
+      }, 300);
+    };
+
+    window.addEventListener('authChanged', handleDebouncedFetch);
+    window.addEventListener('userLoggedIn', handleDebouncedFetch);
+    window.addEventListener('favoritesUpdated', handleDebouncedFetch);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('authChanged', handleDebouncedFetch);
+      window.removeEventListener('userLoggedIn', handleDebouncedFetch);
+      window.removeEventListener('favoritesUpdated', handleDebouncedFetch);
+    };
+  }, [fetchData]);
+
+  // ✅ إعادة الجلب عند تغيير التوكن (مع منع التكرار)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        // ✅ تأخير لتجنب التكرار
+        setTimeout(() => {
+          fetchData(true);
+        }, 200);
+      } else {
+        setFavorites([]);
+        setTotal(0);
+        favoritesMapRef.current = new Map();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [fetchData]);
 
@@ -84,10 +216,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       
       if (response.result === true && response.data) {
         toast.success('تم إضافة المنتج إلى المفضلة');
-        
-        // إعادة جلب البيانات بالكامل للتأكد من التزامن
         await fetchData(false);
-        
         return true;
       } else {
         if (response.message === "هذا المنتج موجود بالفعل في مفضلتك.") {
@@ -115,10 +244,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       
       if (response.result === true) {
         toast.success('تم إزالة المنتج من المفضلة');
-        
-        // إعادة جلب البيانات بالكامل للتأكد من التزامن
         await fetchData(false);
-        
         return true;
       } else {
         toast.error(response.message || 'فشل في إزالة المنتج');

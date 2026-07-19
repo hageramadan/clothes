@@ -1,7 +1,7 @@
 // app/account/wishlist/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useReducer } from "react";
 import Link from "next/link";
 import { Heart, Trash2, ArrowRight, X, ChevronRight } from "lucide-react";
 import Pagination from "@/components/products/Pagination";
@@ -75,6 +75,101 @@ interface PaginationData {
   previous_page: number | null;
 }
 
+// ========== State Management using useReducer ==========
+interface WishlistState {
+  items: TransformedProduct[];
+  pagination: PaginationData;
+  currentPage: number;
+}
+
+type WishlistAction = 
+  | { type: 'SET_ITEMS'; payload: { items: TransformedProduct[]; total: number; currentPage: number } }
+  | { type: 'SET_PAGE'; payload: number }
+  | { type: 'CLEAR_ITEMS' };
+
+const initialState: WishlistState = {
+  items: [],
+  currentPage: 1,
+  pagination: {
+    current_page: 1,
+    last_page: 1,
+    per_page: 8,
+    total: 0,
+    from: 0,
+    to: 0,
+    next_page: null,
+    previous_page: null
+  }
+};
+
+function wishlistReducer(state: WishlistState, action: WishlistAction): WishlistState {
+  const itemsPerPage = 8;
+  
+  switch (action.type) {
+    case 'SET_ITEMS': {
+      const { items, total, currentPage } = action.payload;
+      const last_page = Math.ceil(total / itemsPerPage) || 1;
+      
+      return {
+        ...state,
+        items,
+        currentPage,
+        pagination: {
+          ...state.pagination,
+          current_page: currentPage,
+          total,
+          from: total > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0,
+          to: total > 0 ? Math.min(currentPage * itemsPerPage, total) : 0,
+          last_page,
+          next_page: currentPage < last_page ? currentPage + 1 : null,
+          previous_page: currentPage > 1 ? currentPage - 1 : null
+        }
+      };
+    }
+    
+    case 'SET_PAGE': {
+      const newPage = action.payload;
+      const { total, last_page } = state.pagination;
+      
+      if (newPage < 1 || newPage > last_page) return state;
+      
+      return {
+        ...state,
+        currentPage: newPage,
+        pagination: {
+          ...state.pagination,
+          current_page: newPage,
+          from: total > 0 ? (newPage - 1) * itemsPerPage + 1 : 0,
+          to: total > 0 ? Math.min(newPage * itemsPerPage, total) : 0,
+          next_page: newPage < last_page ? newPage + 1 : null,
+          previous_page: newPage > 1 ? newPage - 1 : null
+        }
+      };
+    }
+    
+    case 'CLEAR_ITEMS': {
+      return {
+        ...state,
+        items: [],
+        currentPage: 1,
+        pagination: {
+          ...state.pagination,
+          total: 0,
+          from: 0,
+          to: 0,
+          last_page: 1,
+          current_page: 1,
+          next_page: null,
+          previous_page: null
+        }
+      };
+    }
+    
+    default:
+      return state;
+  }
+}
+
 // ========== المكون الرئيسي ==========
 export default function WishlistPage() {
   const { 
@@ -86,19 +181,8 @@ export default function WishlistPage() {
     refetch
   } = useFavorites();
   
+  const [state, dispatch] = useReducer(wishlistReducer, initialState);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [items, setItems] = useState<TransformedProduct[]>([]);
-  const [pagination, setPagination] = useState<PaginationData>({
-    current_page: 1,
-    last_page: 1,
-    per_page: 8,
-    total: 0,
-    from: 0,
-    to: 0,
-    next_page: null,
-    previous_page: null
-  });
   
   const itemsPerPage = 8;
 
@@ -122,49 +206,39 @@ export default function WishlistPage() {
     );
   }, []);
 
-  // ✅ تحديث العناصر عند تغيير favorites
+  // ✅ تحديث البيانات عند تغيير favorites (بدون setState مباشر في useEffect)
   useEffect(() => {
     if (favorites && favorites.length > 0) {
       console.log(`🟢 Transforming ${favorites.length} favorites`);
       const transformed = transformFavorites(favorites);
-      setItems(transformed);
-      
-      // تحديث pagination
-      setPagination(prev => ({
-        ...prev,
-        current_page: currentPage,
-        total: favorites.length,
-        from: (currentPage - 1) * itemsPerPage + 1,
-        to: Math.min(currentPage * itemsPerPage, favorites.length),
-        last_page: Math.ceil(favorites.length / itemsPerPage)
-      }));
+      dispatch({ 
+        type: 'SET_ITEMS', 
+        payload: { 
+          items: transformed, 
+          total: favorites.length, 
+          currentPage: state.currentPage 
+        } 
+      });
     } else {
-      setItems([]);
-      setPagination(prev => ({
-        ...prev,
-        total: 0,
-        from: 0,
-        to: 0,
-        last_page: 1
-      }));
+      dispatch({ type: 'CLEAR_ITEMS' });
     }
-  }, [favorites, currentPage, transformFavorites]);
+  }, [favorites, transformFavorites]); // ✅ إزالة state.currentPage من التبعيات
 
-  // ✅ تحديث الصفحة عند تغيير الـ Page
+  // ✅ تحديث الصفحة
   const handlePageChange = useCallback((page: number) => {
     console.log(`🔄 Changing to page ${page}`);
-    if (page >= 1 && page <= pagination.last_page) {
-      setCurrentPage(page);
+    if (page >= 1 && page <= state.pagination.last_page) {
+      dispatch({ type: 'SET_PAGE', payload: page });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [pagination.last_page]);
+  }, [state.pagination.last_page]);
 
   // ✅ عرض العناصر حسب الصفحة الحالية
-  const getCurrentPageItems = useCallback(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentItems = useMemo(() => {
+    const startIndex = (state.currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return items.slice(startIndex, endIndex);
-  }, [items, currentPage, itemsPerPage]);
+    return state.items.slice(startIndex, endIndex);
+  }, [state.items, state.currentPage, itemsPerPage]);
 
   // ✅ تحديث القائمة بعد الحذف
   const handleClearAll = useCallback(() => {
@@ -175,7 +249,6 @@ export default function WishlistPage() {
     try {
       await clearAllFavorites();
       setShowClearConfirm(false);
-      // ✅ إعادة تحميل البيانات من خلال refetch
       await refetch();
       toast.success("تم حذف جميع المنتجات من المفضلة");
     } catch (error) {
@@ -197,11 +270,8 @@ export default function WishlistPage() {
     return url;
   }, []);
 
-  // ✅ الحصول على عناصر الصفحة الحالية
-  const currentItems = getCurrentPageItems();
-
   // ========== عرض حالة التحميل ==========
-  if (isLoading && items.length === 0) {
+  if (isLoading && state.items.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] page-with-padding">
         <div className="container mx-auto px-4 sm:px-6 md:px-8 py-8 md:py-12">
@@ -211,7 +281,6 @@ export default function WishlistPage() {
                 <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#EC221F] border-t-transparent rounded-full animate-spin"></div>
               </div>
-              {/* <p className="text-gray-500 text-sm animate-pulse">جاري تحميل المفضلة...</p> */}
             </div>
           </div>
         </div>
@@ -220,7 +289,7 @@ export default function WishlistPage() {
   }
 
   // ========== عرض حالة فارغة ==========
-  if (items.length === 0) {
+  if (state.items.length === 0) {
     return <WishlistEmpty />;
   }
 
@@ -228,7 +297,6 @@ export default function WishlistPage() {
   return (
     <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b]">
       <div className="container mx-auto">
-        {/* ✅ استخدام PageHeader */}
         <PageHeader title="قائمة المفضلة" />
 
         {/* ✅ شريط التحكم */}
@@ -236,11 +304,11 @@ export default function WishlistPage() {
           <div className="flex items-center gap-3">
             <Heart className="w-6 h-6 text-[#EC221F] fill-current" />
             <span className="text-sm text-gray-600">
-              <span className="font-bold text-[#EC221F]">{items.length}</span> منتج
+              <span className="font-bold text-[#EC221F]">{state.items.length}</span> منتج
             </span>
           </div>
           
-          {items.length > 0 && (
+          {state.items.length > 0 && (
             <button
               onClick={handleClearAll}
               disabled={isMutating}
@@ -281,13 +349,13 @@ export default function WishlistPage() {
         </div>
 
         {/* ✅ Pagination */}
-        {pagination.last_page > 1 && (
+        {state.pagination.last_page > 1 && (
           <div className="mt-8">
             <Pagination
-              currentPage={pagination.current_page}
-              lastPage={pagination.last_page}
+              currentPage={state.pagination.current_page}
+              lastPage={state.pagination.last_page}
               onPageChange={handlePageChange}
-              total={pagination.total}
+              total={state.pagination.total}
             />
           </div>
         )}
@@ -297,7 +365,6 @@ export default function WishlistPage() {
       {showClearConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
-            {/* رأس النافذة */}
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-lg font-bold text-gray-800">تأكيد الحذف</h3>
               <button 
@@ -308,7 +375,6 @@ export default function WishlistPage() {
               </button>
             </div>
             
-            {/* محتوى النافذة */}
             <div className="p-6">
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
@@ -318,12 +384,11 @@ export default function WishlistPage() {
                   هل أنت متأكد من حذف جميع المنتجات؟
                 </p>
                 <p className="text-gray-500 text-sm">
-                  سيتم حذف <span className="font-bold text-[#EC221F]">{items.length}</span> منتج من قائمة المفضلة بشكل نهائي.
+                  سيتم حذف <span className="font-bold text-[#EC221F]">{state.items.length}</span> منتج من قائمة المفضلة بشكل نهائي.
                 </p>
               </div>
             </div>
 
-            {/* أزرار النافذة */}
             <div className="flex gap-3 p-6 pt-0">
               <button 
                 onClick={cancelClearAll} 

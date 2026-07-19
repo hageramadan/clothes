@@ -1,3 +1,5 @@
+// src/contexts/AuthContext.tsx
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
@@ -114,13 +116,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // ✅ دالة مساعدة لحذف guest_token ومسح وضع الضيف
   const clearGuestModeAndToken = useCallback(() => {
-    // حذف guest_token من localStorage
     if (typeof window !== 'undefined') {
       localStorage.removeItem('guest_cart_token');
     }
-    // مسح وضع الضيف من CartContext
     clearGuestMode();
   }, [clearGuestMode]);
+
+  // ✅ دالة لإطلاق الأحداث بعد تسجيل الدخول
+  const triggerLoginEvents = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      // إطلاق أحداث لتحديث المفضلة والسلة
+      window.dispatchEvent(new Event('favoritesUpdated'));
+      window.dispatchEvent(new Event('authChanged'));
+      window.dispatchEvent(new Event('cartUpdated'));
+      
+      // إطلاق حدث مخصص مع بيانات المستخدم
+      const event = new CustomEvent('userLoggedIn', {
+        detail: { user: user }
+      });
+      window.dispatchEvent(event);
+      
+      console.log('✅ Login events triggered');
+    }
+  }, [user]);
 
   // تسجيل الدخول بالبريد الإلكتروني
   const handleLoginWithEmail = useCallback(async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
@@ -131,8 +149,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // ✅ حذف guest_token ومسح وضع الضيف
         clearGuestModeAndToken();
         
+        // ✅ جلب بيانات المستخدم
+        await fetchUserData();
+        
         // ✅ إعادة تحميل السلة
         await refetchCart();
+        
+        // ✅ إطلاق الأحداث
+        triggerLoginEvents();
         
         return { success: true, message: result.message };
       } else {
@@ -142,7 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Login error:', error);
       return { success: false, message: 'حدث خطأ أثناء تسجيل الدخول' };
     }
-  }, [clearGuestModeAndToken, refetchCart]);
+  }, [clearGuestModeAndToken, fetchUserData, refetchCart, triggerLoginEvents]);
 
   // تسجيل الدخول برقم الهاتف
   const handleLoginWithPhone = useCallback(async (
@@ -157,8 +181,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // ✅ حذف guest_token ومسح وضع الضيف
         clearGuestModeAndToken();
         
+        // ✅ جلب بيانات المستخدم
+        await fetchUserData();
+        
         // ✅ إعادة تحميل السلة
         await refetchCart();
+        
+        // ✅ إطلاق الأحداث
+        triggerLoginEvents();
         
         return { success: true, message: result.message };
       } else {
@@ -168,7 +198,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Login error:', error);
       return { success: false, message: 'حدث خطأ أثناء تسجيل الدخول' };
     }
-  }, [clearGuestModeAndToken, refetchCart]);
+  }, [clearGuestModeAndToken, fetchUserData, refetchCart, triggerLoginEvents]);
 
   // إنشاء حساب بالبريد الإلكتروني
   const handleRegisterWithEmail = useCallback(async (
@@ -239,6 +269,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           // ✅ إعادة تحميل السلة
           await refetchCart();
+          
+          // ✅ إطلاق الأحداث
+          triggerLoginEvents();
         }
         return { success: true, message: result.message, token: result.data?.token };
       } else {
@@ -248,7 +281,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('OTP verification error:', error);
       return { success: false, message: 'حدث خطأ أثناء التحقق' };
     }
-  }, [clearGuestModeAndToken, refetchCart]);
+  }, [clearGuestModeAndToken, refetchCart, triggerLoginEvents]);
 
   // التحقق من OTP للهاتف
   const handleVerifyOTPWithPhone = useCallback(async (otp: string, phone: string): Promise<{ success: boolean; message: string; token?: string }> => {
@@ -277,6 +310,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           // ✅ إعادة تحميل السلة
           await refetchCart();
+          
+          // ✅ إطلاق الأحداث
+          triggerLoginEvents();
         }
         return { success: true, message: result.message, token: result.data?.token };
       } else {
@@ -286,7 +322,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('OTP verification error:', error);
       return { success: false, message: 'حدث خطأ أثناء التحقق' };
     }
-  }, [clearGuestModeAndToken, refetchCart]);
+  }, [clearGuestModeAndToken, refetchCart, triggerLoginEvents]);
 
   // إعادة إرسال OTP للبريد الإلكتروني
   const handleResendOTPToEmail = useCallback(async (email: string): Promise<{ success: boolean; message: string }> => {
@@ -337,6 +373,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       setIsAuthenticated(false);
       setUser(null);
+      
+      // ✅ إطلاق أحداث لتحديث المفضلة والسلة
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('favoritesUpdated'));
+        window.dispatchEvent(new Event('authChanged'));
+        window.dispatchEvent(new Event('cartUpdated'));
+      }
     }
   }, []);
 
