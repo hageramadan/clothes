@@ -570,59 +570,82 @@ export default function ProductFilters({ onFilterChange, isMobile = false, onClo
         </button>
       </h3>
 
-      {/* ===== فلتر السعر ===== */}
-      <FilterSection title="الاسعار">
-        <div className="space-y-4">
-          <p className="text-sm text-[#333333] flex justify-end gap-1">
-            <span>L.E</span>
-            {tempMaxPrice.toLocaleString()}
-            <span>-</span>
-            <span>L.E</span>
-            {tempMinPrice.toLocaleString()}
-          </p>
 
-          <Slider
-            value={state.tempPriceRange}
-            onValueChange={handlePriceSliderChange}
-            min={MIN_PRICE}
-            max={MAX_PRICE}
-            step={10}
-            className="my-6"
-          />
+<FilterSection title="الاسعار">
+  <div className="space-y-4">
+    <p className="text-sm text-[#333333] flex justify-end gap-1">
+      <span>L.E</span>
+      {tempMaxPrice ? tempMaxPrice.toLocaleString() : '___'}
+      <span>-</span>
+      <span>L.E</span>
+      {tempMinPrice.toLocaleString()}
+    </p>
 
-          <div className="flex gap-3 mt-2 items-center">
-            <div className="flex-1">
-              <label className="block text-xs text-gray-500 mb-1">الحد الأقصى</label>
-              <input
-                type="number"
-                 value={tempMaxPrice === 0 ? "" : tempMaxPrice} 
-                onChange={handleMaxPriceInputChange}
-                className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs text-gray-500 mb-1">الحد الأدنى</label>
-              <input
-                type="number"
-                value={tempMinPrice}
-                onChange={handleMinPriceInputChange}
-                className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            {/* ✅ زر تطبيق السعر - يعمل فقط عند الضغط عليه */}
-            {!isMobile && (
-              <div className="mt-4">
-                <button
-                  onClick={handleApplyPriceFilter}
-                  className="w-[32.89px] rounded-[7px] bg-[#0A0500] text-white py-2 transition-colors font-semibold flex items-center justify-center gap-2 hover:bg-[#2a2a2a]"
-                >
-                  <FaArrowLeft className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </FilterSection>
+    <Slider
+      value={state.tempPriceRange}
+      onValueChange={handlePriceSliderChange}
+      min={MIN_PRICE}
+      max={MAX_PRICE}
+      step={10}
+      className="my-6"
+    />
+
+    <div className="flex gap-3 mt-2 items-end">
+      <div className="flex-1">
+        <label className="block text-xs text-gray-500 mb-1">الحد الأقصى</label>
+        <input
+          type="number"
+          value={tempMaxPrice || ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === '') {
+              // مسح القيمة بالكامل
+              dispatch({ type: 'SET_TEMP_PRICE_RANGE', payload: [tempMinPrice, 0] });
+              return;
+            }
+            const numValue = Number(value);
+            if (!isNaN(numValue) && numValue >= 0) {
+              // ✅ إزالة الشرط `numValue >= tempMinPrice` للسماح بأي رقم
+              dispatch({ type: 'SET_TEMP_PRICE_RANGE', payload: [tempMinPrice, numValue] });
+            }
+          }}
+          className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="الحد الأقصى"
+        />
+      </div>
+      <div className="flex-1">
+        <label className="block text-xs text-gray-500 mb-1">الحد الأدنى</label>
+        <input
+          type="number"
+          value={tempMinPrice || ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === '') {
+              dispatch({ type: 'SET_TEMP_PRICE_RANGE', payload: [0, tempMaxPrice] });
+              return;
+            }
+            const numValue = Number(value);
+            if (!isNaN(numValue) && numValue >= 0) {
+              // ✅ إزالة الشرط `numValue <= tempMaxPrice` للسماح بأي رقم
+              dispatch({ type: 'SET_TEMP_PRICE_RANGE', payload: [numValue, tempMaxPrice] });
+            }
+          }}
+          className="w-full px-3 py-2 border border-gray-3000 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="الحد الأدنى"
+        />
+      </div>
+      {/* ✅ زر تطبيق السعر */}
+      <div className="mb-0">
+        <button
+          onClick={handleApplyPriceFilter}
+          className="w-[32.89px] rounded-[7px] bg-[#0A0500] text-white py-2 transition-colors font-semibold flex items-center justify-center gap-2 hover:bg-[#2a2a2a]"
+        >
+          <FaArrowLeft className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  </div>
+</FilterSection>
 
       {/* ===== فلتر الكاتجوريز ===== */}
       <FilterSection title="الفئات الرئيسية">
