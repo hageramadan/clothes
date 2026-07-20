@@ -12,8 +12,6 @@ interface PromoCodeInputProps {
 }
 
 // const API_URL = 'https://admin.souqkaber.com/api';
-
-// API URL
 const API_URL = 'https://dukanah.admin.t-carts.com/api';
 
 // دالة جلب التوكن
@@ -24,13 +22,33 @@ const getToken = (): string | null => {
   return null;
 };
 
+// دالة جلب الـ Guest Token
+const getGuestToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('guest_cart_token');
+  }
+  return null;
+};
+
 // دالة جلب الهيدرز
 const getHeaders = (): HeadersInit => {
   const token = getToken();
-  return {
+  const guestToken = getGuestToken();
+  
+  const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
   };
+  
+  // إذا كان هناك توكن مصادقة (مستخدم مسجل دخول)
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  } 
+  // وإلا إذا كان هناك Guest Token
+  else if (guestToken) {
+    headers['x-guest-token'] = guestToken;
+  }
+  
+  return headers;
 };
 
 // دالة تطبيق كود الخصم من الـ API
@@ -45,7 +63,6 @@ const applyCouponAPI = async (code: string): Promise<{ success: boolean; discoun
     const data = await response.json();
     
     if (data.result === true && data.data) {
-      // استخراج نسبة الخصم من الرد
       const discount = data.data?.coupon?.discount_percentage || 
                        data.data?.discount_percentage || 
                        data.data?.discount || 
