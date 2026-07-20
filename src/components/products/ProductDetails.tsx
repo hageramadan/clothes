@@ -923,14 +923,14 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                   </div>
                   
                   {/* ✅ عرض الكمية المتوفرة */}
-                  {availableQuantity !== null && (
+                  {/* {availableQuantity !== null && (
                     <span className="text-xs text-gray-600">
                       المتوفر: {availableQuantity} وحدة
                     </span>
-                  )}
+                  )} */}
                   
                   {/* ✅ تحذير عند قرب نفاذ الكمية */}
-                  {availableQuantity !== null && availableQuantity < 5 && availableQuantity > 0 && (
+                  {availableQuantity !== null && availableQuantity < 6 && availableQuantity > 0 && (
                     <span className="text-xs text-orange-600 font-semibold">
                       ⚠️ متبقي {availableQuantity} فقط
                     </span>

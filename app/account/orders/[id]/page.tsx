@@ -916,7 +916,7 @@ export default function OrderDetailsPage() {
                 </div>
 
                 {/* ✅ زر إعادة محاولة الدفع - يظهر فقط إذا كان الطلب غير مدفوع */}
-                {order.payment_status === "غير مدفوع" && (
+                {order.payment_status === "غير مدفوع" && order.payment_method==="بطاقة"&& (
                   <button
                     onClick={handleRetryPayment}
                     className="mt-4 w-full flex items-center justify-center gap-2 bg-[#EC221F] text-white py-2.5 rounded-xl font-medium hover:bg-red-700 transition"

@@ -124,8 +124,8 @@ const fetchOrderDetails = async (orderId: string): Promise<OrderDetails | null> 
     const data = await response.json();
     console.log("📦 Order details for return:", data);
     
-    if (data.result === true && data.data) {
-      const order = data.data;
+    if (data.result === true && data.data && data.data.order) {
+      const order = data.data.order;
       return {
         id: order.id,
         order_number: order.order_number,
@@ -267,11 +267,11 @@ export default function ReturnRequestPage() {
       setShowSuccess(true);
       
       // عرض رسالة نجاح إضافية
-      toast.success(result.message, {
-        duration: 4000,
-        position: "top-center",
-        icon: "✅",
-      });
+      // toast.success(result.message, {
+      //   duration: 4000,
+      //   position: "top-center",
+      //   icon: "✅",
+      // });
     } else {
       toast.error(result.message, {
         duration: 4000,

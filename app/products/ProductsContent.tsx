@@ -151,7 +151,7 @@ export default function ProductsContent() {
       if (filters.brands && filters.brands.length > 0) {
         filterParams.brands = filters.brands;
       }
-      if (filters.minPrice !== undefined && filters.minPrice > 0) {
+      if (filters.minPrice !== undefined && filters.minPrice >= 0) {
         filterParams.price_range = [
           filters.minPrice,
           filters.maxPrice || 1000000,
@@ -282,7 +282,7 @@ export default function ProductsContent() {
       count += filters.sizes.length;
     if (filters.brands && filters.brands.length > 0)
       count += filters.brands.length;
-    if (filters.minPrice !== undefined && filters.minPrice > 0) count++;
+    if (filters.minPrice !== undefined && filters.minPrice >= 0) count++;
     if (filters.maxPrice !== undefined && filters.maxPrice < 1000) count++;
     return count;
   };

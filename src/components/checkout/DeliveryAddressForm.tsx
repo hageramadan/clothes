@@ -97,7 +97,7 @@ export default function DeliveryAddressForm({
   const API_URL = 'https://dukanah.admin.t-carts.com/api';
 
   const getFieldValue = (value: string): string => {
-    return value && value.trim() !== "" ? value.trim() : "1";
+    return value && value.trim() !== "" ? value.trim() : "";
   };
 
   // ✅ جلب العناوين المحفوظة (للمستخدمين المسجلين فقط)
