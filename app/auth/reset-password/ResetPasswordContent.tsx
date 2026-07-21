@@ -1,4 +1,5 @@
 // app/auth/reset-password/ResetPasswordContent.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -30,6 +31,25 @@ export default function ResetPasswordContent() {
     if (!email) {
       toast.error("البريد الإلكتروني مطلوب");
       setTimeout(() => router.push("/auth/forgot-password"), 2000);
+      return;
+    }
+    
+    // ✅ التحقق من وجود reset_token في localStorage
+    if (typeof window !== 'undefined') {
+      const resetToken = localStorage.getItem('reset_token');
+      const savedEmail = localStorage.getItem('reset_email');
+      
+      console.log('🔍 Checking reset token:', resetToken);
+      console.log('📧 Saved email:', savedEmail);
+      console.log('📧 Current email:', email);
+      
+      if (!resetToken) {
+        toast.error("رمز التحقق غير موجود. يرجى المحاولة مرة أخرى");
+        setTimeout(() => router.push("/auth/forgot-password"), 2000);
+      } else if (savedEmail && savedEmail !== email) {
+        toast.error("البريد الإلكتروني غير متطابق. يرجى المحاولة مرة أخرى");
+        setTimeout(() => router.push("/auth/forgot-password"), 2000);
+      }
     }
   }, [email, router]);
 
@@ -65,34 +85,41 @@ export default function ResetPasswordContent() {
 
     setIsLoading(true);
 
-    const result = await resetPassword({
-      email: email,
-      new_password: formData.new_password,
-      new_password_confirmation: formData.new_password_confirmation,
-    });
-
-    if (result.result) {
-      toast.success("تم إعادة تعيين كلمة المرور بنجاح! ✅", {
-        duration: 3000,
-      });
+    try {
+      console.log('📤 Sending reset password request for email:', email);
       
-      // ✅ التوجيه إلى صفحة تسجيل الدخول
-      setTimeout(() => {
-        router.push("/auth/login?reset=true");
-      }, 1500);
-    } else {
-      toast.error(result.message || "فشل إعادة تعيين كلمة المرور", {
-        duration: 4000,
+      const result = await resetPassword({
+        email: email,
+        new_password: formData.new_password,
+        new_password_confirmation: formData.new_password_confirmation,
       });
-    }
 
-    setIsLoading(false);
+      console.log('📥 Reset password response:', result);
+
+      if (result.result) {
+        toast.success("تم إعادة تعيين كلمة المرور بنجاح! ✅", {
+          duration: 3000,
+        });
+        
+        setTimeout(() => {
+          router.push("/auth/login?reset=true");
+        }, 1500);
+      } else {
+        toast.error(result.message || "فشل إعادة تعيين كلمة المرور", {
+          duration: 4000,
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      toast.error("حدث خطأ غير متوقع");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-l from-[#bdcbf12a] to-[#feecea3b] flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
-        {/* زر الرجوع */}
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6 transition"
@@ -110,7 +137,6 @@ export default function ResetPasswordContent() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* كلمة المرور الجديدة */}
           <div className="mb-5">
             <label className="block text-gray-700 font-medium mb-2">
               كلمة المرور الجديدة <span className="text-red-500">*</span>
@@ -143,7 +169,6 @@ export default function ResetPasswordContent() {
             )}
           </div>
 
-          {/* تأكيد كلمة المرور */}
           <div className="mb-6">
             <label className="block text-gray-700 font-medium mb-2">
               تأكيد كلمة المرور <span className="text-red-500">*</span>

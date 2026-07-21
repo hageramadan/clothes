@@ -247,6 +247,7 @@ const mapPaymentMethod = (method: string): string => {
     كاش: "الدفع عند الاستلام",
     أونلاين: "أونلاين",
     card: "بطاقة ائتمان",
+    بطاقه: "بطاقة ائتمان",
     mada: "مدى",
     wallet: "محفظة",
   };
@@ -390,6 +391,7 @@ export default function OrderDetailsPage() {
   const [orderNotes, setOrderNotes] = useState("");
   const [copied, setCopied] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isRetryingPayment, setIsRetryingPayment] = useState(false); // ✅ إضافة حالة
 
   // ✅ State for Cancel Modal
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -469,19 +471,21 @@ export default function OrderDetailsPage() {
     setIsCancelling(false);
   };
 
-  // ✅ دالة إعادة محاولة الدفع
+  // ✅ دالة إعادة محاولة الدفع - باستخدام الـ endpoint /repay
   const handleRetryPayment = async () => {
     if (!order) return;
 
     try {
+      setIsRetryingPayment(true);
+
       // إظهار رسالة تحميل
       const toastId = toast.loading("جاري تجهيز بوابة الدفع...", {
         position: "top-center",
       });
 
-      // جلب بيانات الدفع الجديدة من الـ API
-      const response = await fetch(`${API_URL}/orders/${orderId}`, {
-        method: "GET",
+      // ✅ استخدام الـ endpoint الجديد: /repay
+      const response = await fetch(`${API_URL}/orders/${orderId}/repay`, {
+        method: "POST",
         headers: getHeaders(),
       });
 
@@ -501,7 +505,14 @@ export default function OrderDetailsPage() {
       // إخفاء رسالة التحميل
       toast.dismiss(toastId);
 
-      if (data.result === true && data.data?.redirect_url) {
+      // ✅ التحقق من الـ response حسب الهيكل الجديد
+      // {
+      //   "data": {
+      //     "redirect_url": "https://...",
+      //     "payment_url_created_at": "2026-07-21 10:30:00"
+      //   }
+      // }
+      if (data.data?.redirect_url) {
         // توجيه المستخدم إلى بوابة الدفع
         window.location.href = data.data.redirect_url;
       } else {
@@ -516,6 +527,8 @@ export default function OrderDetailsPage() {
         duration: 4000,
         position: "top-center",
       });
+    } finally {
+      setIsRetryingPayment(false);
     }
   };
 
@@ -915,14 +928,24 @@ export default function OrderDetailsPage() {
                   </div>
                 </div>
 
-                {/* ✅ زر إعادة محاولة الدفع - يظهر فقط إذا كان الطلب غير مدفوع */}
-                {order.payment_status === "غير مدفوع" && order.payment_method==="بطاقة"&& (
+                {/* ✅ زر إعادة محاولة الدفع - يظهر فقط إذا كان الطلب غير مدفوع وطريقة الدفع بطاقة */}
+                {order.payment_status === "غير مدفوع" && order.payment_method === "بطاقة" && (
                   <button
                     onClick={handleRetryPayment}
-                    className="mt-4 w-full flex items-center justify-center gap-2 bg-[#EC221F] text-white py-2.5 rounded-xl font-medium hover:bg-red-700 transition"
+                    disabled={isRetryingPayment}
+                    className="mt-4 w-full flex items-center justify-center gap-2 bg-[#EC221F] text-white py-2.5 rounded-xl font-medium hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <RefreshCw className="w-4 h-4" />
-                    محاولة الدفع مجدداً
+                    {isRetryingPayment ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        جاري التجهيز...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        محاولة الدفع مجدداً
+                      </>
+                    )}
                   </button>
                 )}
               </div>

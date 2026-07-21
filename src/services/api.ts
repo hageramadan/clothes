@@ -1084,7 +1084,7 @@ interface VerifyForgotPasswordResponse {
   errNum: number;
   message: string;
   data: {
-    token?: string;
+    reset_token?: string;
   } | null;
 }
 
@@ -1130,6 +1130,10 @@ export async function forgotPassword(data: ForgotPasswordRequest): Promise<Forgo
 /**
  * دالة التحقق من رمز إعادة تعيين كلمة المرور
  */
+// services/api.ts
+
+// services/api.ts
+
 export async function verifyForgotPassword(data: VerifyForgotPasswordRequest): Promise<VerifyForgotPasswordResponse> {
   try {
     const response = await fetch(`${API_URL}/auth/verify-forgot-password`, {
@@ -1141,6 +1145,16 @@ export async function verifyForgotPassword(data: VerifyForgotPasswordRequest): P
     });
 
     const result: VerifyForgotPasswordResponse = await response.json();
+    
+    // ✅ تخزين reset_token في localStorage عند نجاح التحقق
+    if (result.result && result.data?.reset_token) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('reset_token', result.data.reset_token);
+        localStorage.setItem('reset_email', data.email);
+        console.log('✅ Reset token saved:', result.data.reset_token); // للتأكد
+      }
+    }
+    
     return result;
   } catch (error) {
     console.error('Error in verifyForgotPassword:', error);
@@ -1152,7 +1166,6 @@ export async function verifyForgotPassword(data: VerifyForgotPasswordRequest): P
     };
   }
 }
-
 /**
  * دالة تغيير كلمة المرور (للمستخدم المسجل دخول)
  */
@@ -1190,25 +1203,51 @@ export async function changePassword(data: ChangePasswordRequest): Promise<Chang
 /**
  * دالة إعادة تعيين كلمة المرور بعد التحقق
  */
+// services/api.ts
+
 export async function resetPassword(data: {
   email: string;
   new_password: string;
   new_password_confirmation: string;
 }): Promise<ChangePasswordResponse> {
   try {
+    // ✅ جلب reset_token من localStorage
+    let resetToken = null;
+    if (typeof window !== 'undefined') {
+      resetToken = localStorage.getItem('reset_token');
+      console.log('🔑 Reset token from localStorage:', resetToken); // للتأكد
+    }
+    
+    // ✅ بناء جسم الطلب
+    const requestBody: any = {
+      email: data.email,
+      new_password: data.new_password,
+      new_password_confirmation: data.new_password_confirmation,
+    };
+    
+    // ✅ إضافة reset_token إذا كان موجوداً
+    if (resetToken) {
+      requestBody.reset_token = resetToken;
+    }
+    
+    console.log('📤 Sending request body:', requestBody); // للتأكد
+    
     const response = await fetch(`${API_URL}/auth/reset-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        email: data.email,
-        new_password: data.new_password,
-        new_password_confirmation: data.new_password_confirmation,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const result: ChangePasswordResponse = await response.json();
+    
+    // ✅ إذا نجحت العملية، امسح التوكن من localStorage
+    if (result.result && typeof window !== 'undefined') {
+      localStorage.removeItem('reset_token');
+      localStorage.removeItem('reset_email');
+    }
+    
     return result;
   } catch (error) {
     console.error('Error in resetPassword:', error);
