@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ProductCard } from "../products/ProductCard";
 import { Button } from "../ui/button";
 import { getNewProducts, ProductData } from "@/services/api";
+import { LoadingProps } from "./HeroCover";
 
 // ✅ إضافة الواجهات المطلوبة
 interface VariantAttribute {
@@ -125,7 +126,7 @@ const transformProduct = (product: ProductData): Product => {
   };
 };
 
-export function LatestProducts() {
+export function LatestProducts({onLoad}:LoadingProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [displayCount, setDisplayCount] = useState(8);
@@ -134,7 +135,7 @@ export function LatestProducts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
-  
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   // استخدام useRef لمنع التحديثات المتكررة
   const isMounted = useRef(true);
   const fetchingRef = useRef(false);
@@ -185,7 +186,14 @@ export function LatestProducts() {
       fetchingRef.current = false;
     }
   }, []);
-
+useEffect(() => {
+  if (!isInitialLoading && !isDataLoaded && onLoad) {
+    setIsDataLoaded(true);
+    setTimeout(() => {
+      onLoad();
+    }, 0);
+  }
+}, [isInitialLoading, isDataLoaded, onLoad]);
   // استخدام useEffect منفصل للتحميل الأولي
   useEffect(() => {
     isMounted.current = true;

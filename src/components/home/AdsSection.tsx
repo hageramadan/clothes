@@ -1,3 +1,5 @@
+// components/home/AdsSection.tsx
+
 'use client'
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '../ui/button'
@@ -6,10 +8,40 @@ import { FaArrowLeft } from 'react-icons/fa'
 import Image from 'next/image'
 import { getAds, AdData } from '@/services/api'
 
+// ✅ 1. إضافة Interface مع onLoad
+interface AdsSectionProps {
+  variant?: 'dark' | 'light';
+  onLoad?: () => void;
+}
+
 // استخراج نسبة الخصم من النص (مثال: "خصم 32%" -> 32)
 const extractDiscount = (text: string): number | null => {
   const match = text.match(/(\d+)%/);
   return match ? parseInt(match[1]) : null;
+};
+
+// ✅ 2. دالة للتحقق من انتهاء العرض
+const isOfferExpired = (endDate: string | null | undefined): boolean => {
+  if (!endDate) return false;
+  const end = new Date(endDate).getTime();
+  const now = new Date().getTime();
+  return now > end;
+};
+
+// ✅ 3. دالة لتنسيق التاريخ
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('ar-EG', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch {
+    return '';
+  }
 };
 
 // حساب الوقت المتبقي من تاريخ الانتهاء
@@ -29,35 +61,35 @@ const calculateTimeLeft = (endDate?: string) => {
     }
   }
   
-  // وقت افتراضي إذا لم يكن هناك تاريخ محدد
   return {
-    days: 2,
-    hours: 12,
-    minutes: 45,
-    seconds: 5
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
   };
 };
 
-interface AdsSectionProps {
-  variant?: 'dark' | 'light'; // 'dark' للإعلان الأول، 'light' للإعلان الثاني
-}
-
-export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
+export function AdsSection({ variant = 'dark', onLoad }: AdsSectionProps) {
   const [ads, setAds] = useState<AdData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState({
-    days: 2,
-    hours: 12,
-    minutes: 45,
-    seconds: 5
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
   });
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
   
   const isMounted = useRef(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   // بيانات افتراضية
   const getDefaultAds = (): AdData[] => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7);
+    
     return [
       {
         id: 1,
@@ -69,7 +101,10 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
         is_active: 1,
         created_at: "",
         updated_at: "",
-        end_date: "2026-07-11" // إضافة تاريخ انتهاء افتراضي
+        end_date: futureDate.toISOString().split('T')[0],
+        start_date: new Date().toISOString().split('T')[0],
+        type: "خصم",
+        type_label: "discount"
       },
       {
         id: 2,
@@ -81,21 +116,57 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
         is_active: 1,
         created_at: "",
         updated_at: "",
-        end_date: "2026-07-11" // إضافة تاريخ انتهاء افتراضي
+        end_date: futureDate.toISOString().split('T')[0],
+        start_date: new Date().toISOString().split('T')[0],
+        type: "عادي",
+        type_label: "normal"
       }
     ];
   };
+
+  // استدعاء onLoad بعد التحميل
+  useEffect(() => {
+    if (!loading && !isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      setTimeout(() => {
+        onLoad();
+      }, 0);
+    }
+  }, [loading, isDataLoaded, onLoad]);
+
+  // استدعاء onLoad في حالة عدم وجود إعلانات
+  useEffect(() => {
+    if (!loading && ads.length === 0 && !isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      setTimeout(() => {
+        onLoad();
+      }, 0);
+    }
+  }, [loading, ads.length, isDataLoaded, onLoad]);
+
+  // استدعاء onLoad في حالة انتهاء العرض
+  useEffect(() => {
+    if (!loading && isExpired && !isDataLoaded && onLoad) {
+      setIsDataLoaded(true);
+      setTimeout(() => {
+        onLoad();
+      }, 0);
+    }
+  }, [loading, isExpired, isDataLoaded, onLoad]);
 
   // جلب الإعلانات من API
   const fetchAds = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      // ✅ getAds ترجع AdData[] مباشرة
       const adsData = await getAds();
       
       if (!isMounted.current) return;
       
+      // ✅ adsData هي مصفوفة من الإعلانات النشطة بالفعل
       if (adsData.length === 0) {
-        // استخدام بيانات افتراضية
         setAds(getDefaultAds());
       } else {
         setAds(adsData);
@@ -129,11 +200,27 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
 
   // تحديث المؤقت عند تغيير الإعلانات أو تاريخ الانتهاء
   useEffect(() => {
-    // اختيار الإعلان المناسب حسب الـ variant
     const currentAd = ads[variant === 'dark' ? 0 : 1];
     
-    // حساب الوقت المتبقي بناءً على تاريخ الانتهاء من الإعلان
-    const newTimeLeft = calculateTimeLeft(currentAd?.end_date);
+    if (!currentAd) {
+      setIsExpired(true);
+      return;
+    }
+    
+    // ✅ التحقق من انتهاء العرض
+    const expired = isOfferExpired(currentAd.end_date);
+    setIsExpired(expired);
+    
+    if (expired) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
+    
+    // حساب الوقت المتبقي
+    const newTimeLeft = calculateTimeLeft(currentAd.end_date);
     setTimeLeft(newTimeLeft);
 
     // تنظيف المؤقت القديم
@@ -143,31 +230,20 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
 
     // تشغيل المؤقت الجديد
     timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        // إعادة حساب الوقت المتبقي من تاريخ الانتهاء الحقيقي
-        const currentAd = ads[variant === 'dark' ? 0 : 1];
-        if (currentAd?.end_date) {
-          const newTime = calculateTimeLeft(currentAd.end_date);
-          // التحقق من انتهاء الوقت
-          if (newTime.days === 0 && newTime.hours === 0 && newTime.minutes === 0 && newTime.seconds === 0) {
-            clearInterval(timerRef.current!);
-            return newTime;
-          }
-          return newTime;
-        }
-        
-        // منطق العد التنازلي اليدوي (كحل احتياطي)
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else if (prev.days > 0) {
-          return { days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
+      const currentAd = ads[variant === 'dark' ? 0 : 1];
+      if (!currentAd) {
+        clearInterval(timerRef.current!);
+        return;
+      }
+      
+      const newTime = calculateTimeLeft(currentAd.end_date);
+      setTimeLeft(newTime);
+      
+      // ✅ التحقق من انتهاء العرض أثناء التحديث
+      if (isOfferExpired(currentAd.end_date)) {
+        setIsExpired(true);
+        clearInterval(timerRef.current!);
+      }
     }, 1000);
 
     return () => {
@@ -179,7 +255,6 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
 
   const formatNumber = (num: number) => String(num).padStart(2, '0');
 
-  // اختيار الإعلان المناسب حسب الـ variant
   const currentAd = ads[variant === 'dark' ? 0 : 1];
   const discount = currentAd ? extractDiscount(currentAd.name) : 32;
   const imageUrl = currentAd?.image 
@@ -187,6 +262,17 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
         ? currentAd.image 
         : `https://dukanah.admin.t-carts.com${currentAd.image}`)
     : (variant === 'dark' ? '/images/sale.png' : '/images/sale1.png');
+  
+  // ✅ تنسيق التاريخ للعرض
+  const formattedEndDate = formatDate(currentAd?.end_date);
+  
+  // التحقق من وجود وقت متبقي
+  const hasTimer = timeLeft.days > 0 || timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0;
+
+  // ✅ إذا انتهى العرض أو لا يوجد إعلان، لا تعرض شيئاً
+  if (isExpired || !currentAd) {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -222,36 +308,45 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
               {currentAd?.description || "Lorem ipsum dolor sit amet consectetur."}
             </p>
             
-            {/* Countdown Timer */}
-            <div className="mt-1 md:mt-4">
-              <p className="text-[6px] text-center md:text-right md:text-base text-gray-300 mb-1 md:mb-3">سينتهي الخصم خلال</p>
-              <div className="flex justify-center md:justify-end gap-1.5 md:gap-5" dir='ltr'>
-                <div className="text-center">
-                  <div className="bg-white text-[#191C1F] rounded-[8px]  px-1 py-0.5 md:px-4 md:py-2 min-w-[35px] md:min-w-[70px]">
-                    <span className="text-[10px] md:text-3xl font-bold">{formatNumber(timeLeft.days)}</span>
+            {/* ✅ عرض تاريخ الانتهاء في النسخة الداكنة */}
+            {formattedEndDate && (
+              <p className="text-[8px] text-center md:text-right text-gray-400">
+                صالحة حتى: {formattedEndDate}
+              </p>
+            )}
+            
+            {/* ✅ Countdown Timer - يظهر فقط إذا لم ينته العرض */}
+            {hasTimer && !isExpired && (
+              <div className="mt-1 md:mt-4">
+                <p className="text-[6px] text-center md:text-right md:text-base text-gray-300 mb-1 md:mb-3">سينتهي الخصم خلال</p>
+                <div className="flex justify-center md:justify-end gap-1.5 md:gap-5" dir='ltr'>
+                  <div className="text-center">
+                    <div className="bg-white text-[#191C1F] rounded-[8px] px-1 py-0.5 md:px-4 md:py-2 min-w-[35px] md:min-w-[70px]">
+                      <span className="text-[10px] md:text-3xl font-bold">{formatNumber(timeLeft.days)}</span>
+                    </div>
+                    <p className="text-[6px] md:text-xs text-gray-500 mt-0.5 md:mt-1">أيام</p>
                   </div>
-                  <p className="text-[6px] md:text-xs text-gray-500 mt-0.5 md:mt-1">أيام</p>
-                </div>
-                <div className="text-center">
-                  <div className="bg-white text-[#191C1F] rounded-[8px]  px-1 py-0.5 md:px-4 md:py-2 min-w-[35px] md:min-w-[70px]">
-                    <span className="text-[10px] md:text-3xl font-bold">{formatNumber(timeLeft.hours)}</span>
+                  <div className="text-center">
+                    <div className="bg-white text-[#191C1F] rounded-[8px] px-1 py-0.5 md:px-4 md:py-2 min-w-[35px] md:min-w-[70px]">
+                      <span className="text-[10px] md:text-3xl font-bold">{formatNumber(timeLeft.hours)}</span>
+                    </div>
+                    <p className="text-[6px] md:text-xs text-gray-500 mt-0.5 md:mt-1">ساعات</p>
                   </div>
-                  <p className="text-[6px] md:text-xs text-gray-500 mt-0.5 md:mt-1">ساعات</p>
-                </div>
-                <div className="text-center">
-                  <div className="bg-white text-[#191C1F] rounded-[8px]  px-1 py-0.5 md:px-4 md:py-2 min-w-[35px] md:min-w-[70px]">
-                    <span className="text-[10px] md:text-3xl font-bold">{formatNumber(timeLeft.minutes)}</span>
+                  <div className="text-center">
+                    <div className="bg-white text-[#191C1F] rounded-[8px] px-1 py-0.5 md:px-4 md:py-2 min-w-[35px] md:min-w-[70px]">
+                      <span className="text-[10px] md:text-3xl font-bold">{formatNumber(timeLeft.minutes)}</span>
+                    </div>
+                    <p className="text-[6px] md:text-xs text-gray-500 mt-0.5 md:mt-1">دقائق</p>
                   </div>
-                  <p className="text-[6px] md:text-xs text-gray-500 mt-0.5 md:mt-1">دقائق</p>
-                </div>
-                <div className="text-center">
-                  <div className="bg-white text-[#191C1F] rounded-[8px]  px-1 py-0.5 md:px-4 md:py-2 min-w-[35px] md:min-w-[70px]">
-                    <span className="text-[10px] md:text-3xl font-bold">{formatNumber(timeLeft.seconds)}</span>
+                  <div className="text-center">
+                    <div className="bg-white text-[#191C1F] rounded-[8px] px-1 py-0.5 md:px-4 md:py-2 min-w-[35px] md:min-w-[70px]">
+                      <span className="text-[10px] md:text-3xl font-bold">{formatNumber(timeLeft.seconds)}</span>
+                    </div>
+                    <p className="text-[6px] md:text-xs text-gray-500 mt-0.5 md:mt-1">ثواني</p>
                   </div>
-                  <p className="text-[6px] md:text-xs text-gray-500 mt-0.5 md:mt-1">ثواني</p>
                 </div>
               </div>
-            </div>
+            )}
             
             <Button
               asChild
@@ -327,6 +422,13 @@ export function AdsSection({ variant = 'dark' }: AdsSectionProps) {
               <p className="text-[#4A5568] text-[7px] md:text-[20px] mt-1 md:mt-6 leading-tight md:leading-relaxed">
                 {currentAd?.description || "Lorem ipsum dolor sit amet consectetur"}
               </p>
+              
+              {/* ✅ عرض تاريخ الانتهاء في النسخة الفاتحة */}
+              {formattedEndDate && (
+                <p className="text-[8px] md:text-sm text-gray-500 mt-1 md:mt-2">
+                  صالحة حتى: {formattedEndDate}
+                </p>
+              )}
               
               <Button
                 asChild

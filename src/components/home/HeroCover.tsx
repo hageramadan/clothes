@@ -20,48 +20,35 @@ interface Slide {
 // ✅ تعريف الدالة أولاً قبل استخدامها
 const getDefaultSlides = (): Slide[] => {
   return [
-    {
-      id: 1,
-      image: "/images/hero/hero1.jpg",
-      title: "حيث تلتقي الأناقة بالثقة",
-      description: 'اكتشف مجموعة مختارة بعناية تجمع بين الراحة والجودة لتناسب جميع مناسباتك.',
-      buttonText: "تسوق الآن",
-      buttonLink: "/products",
-    },
-    {
-      id: 2,
-      image: "/images/hero/hero2.jpg",
-      title: "حيث تلتقي الأناقة بالثقة",
-      description: 'اكتشف مجموعة مختارة بعناية تجمع بين الراحة والجودة لتناسب جميع مناسباتك.',
-      buttonText: "تسوق الآن",
-      buttonLink: "/products",
-    },
-    {
-      id: 3,
-      image: "/images/hero/hero1.jpg",
-      title: "حيث تلتقي الأناقة بالثقة",
-      description: 'اكتشف مجموعة مختارة بعناية تجمع بين الراحة والجودة لتناسب جميع مناسباتك.',
-      buttonText: "تسوق الآن",
-      buttonLink: "/products",
-    },
+   
   ];
 };
+export interface LoadingProps {
+  onLoad?: () => void;
+}
 
-export function Hero() {
+export function Hero({ onLoad }: LoadingProps) {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [loadedImages, setLoadedImages] = useState<{ [key: number]: boolean }>({});
-  
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   // Touch swipe state
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   
   const minSwipeDistance = 50;
-
+useEffect(() => {
+  if (!loading && !isDataLoaded && onLoad) {
+    setIsDataLoaded(true);
+    setTimeout(() => {
+      onLoad();
+    }, 0);
+  }
+}, [loading, isDataLoaded, onLoad]);
   // Fetch sliders from API
   useEffect(() => {
     const fetchSliders = async () => {

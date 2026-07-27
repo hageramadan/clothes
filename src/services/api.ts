@@ -193,7 +193,11 @@ export interface AdData {
   is_active: number;
   created_at: string;
   updated_at: string;
-  end_date?:string
+  end_date?:string;
+  start_date?:string
+  type?:string;
+  type_label?:string;
+ 
 }
 
 export async function getAds(): Promise<AdData[]> {

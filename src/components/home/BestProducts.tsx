@@ -7,6 +7,7 @@ import { ChevronLeft } from "lucide-react";
 import { ProductCard } from "../products/ProductCard";
 import { Button } from "../ui/button";
 import { getMostSellingProducts, ProductData } from "@/services/api";
+import { LoadingProps } from "./HeroCover";
 
 // ✅ إضافة الواجهات المطلوبة
 interface VariantAttribute {
@@ -126,7 +127,7 @@ const transformProduct = (product: ProductData): Product => {
   };
 };
 
-export function BestProducts() {
+export function BestProducts({onLoad}:LoadingProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [displayCount, setDisplayCount] = useState(8);
@@ -135,7 +136,7 @@ export function BestProducts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
-  
+   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const isMounted = useRef(true);
   const fetchingRef = useRef(false);
 
@@ -185,7 +186,14 @@ export function BestProducts() {
       fetchingRef.current = false;
     }
   }, []);
-
+useEffect(() => {
+  if (!isInitialLoading && !isDataLoaded && onLoad) {
+    setIsDataLoaded(true);
+    setTimeout(() => {
+      onLoad();
+    }, 0);
+  }
+}, [isInitialLoading, isDataLoaded, onLoad]);
   useEffect(() => {
     isMounted.current = true;
     

@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCategories } from "@/services/api";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { LoadingProps } from "./HeroCover";
 
 interface Category {
   id: number;
@@ -40,11 +41,19 @@ const getDefaultCategories = (): Category[] => {
   ];
 };
 
-export function CategoriesSection() {
+export function CategoriesSection({onLoad}:LoadingProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+const [isDataLoaded, setIsDataLoaded] = useState(false);
+useEffect(() => {
+  if (!loading && !isDataLoaded && onLoad) {
+    setIsDataLoaded(true);
+    setTimeout(() => {
+      onLoad();
+    }, 0);
+  }
+}, [loading, isDataLoaded, onLoad]);
   useEffect(() => {
     const fetchCategories = async () => {
       try {
