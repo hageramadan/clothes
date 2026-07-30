@@ -8,44 +8,44 @@ const nextConfig: NextConfig = {
     remotePatterns: [
         {
         protocol: 'https',
-        hostname: 'dukanah.admin.t-carts.com',
+        hostname: 'fashion.admin.t-carts.com',
         port: '',
-        pathname: '/storage/tenant_dukanah/ad_image/**',
+        pathname: '/storage/tenant_fashion/ad_image/**',
       },
        {
         protocol: 'https',
-        hostname: 'dukanah.admin.t-carts.com',
+        hostname: 'fashion.admin.t-carts.com',
         port: '',
-        pathname: '/storage/tenant_dukanah/product_images/**',
+        pathname: '/storage/tenant_fashion/product_images/**',
       },
          {
         protocol: 'https',
-        hostname: 'dukanah.admin.t-carts.com',
+        hostname: 'fashion.admin.t-carts.com',
         port: '',
-        pathname: '/storage/tenant_dukanah/category_image/**',
+        pathname: '/storage/tenant_fashion/category_image/**',
       },
       {
         protocol: 'https',
-        hostname: 'dukanah.admin.t-carts.com',
+        hostname: 'fashion.admin.t-carts.com',
         port: '',
-        pathname: '/storage/tenant_dukanah/slider_image/**',
+        pathname: '/storage/tenant_fashion/slider_image/**',
         search: '',
       },
           {
         protocol: 'https',
-        hostname: 'dukanah.admin.t-carts.com',
+        hostname: 'fashion.admin.t-carts.com',
         port: '',
         pathname: '/**', // يسمح بكل المسارات من هذا الـ hostname
       },
       {
         protocol: 'https',
-        hostname: 'dukanah.admin.t-carts.com',
+        hostname: 'fashion.admin.t-carts.com',
         port: '',
         pathname: '/storage/**', // يسمح بمسار storage تحديداً
       },
       {
         protocol: 'https',
-        hostname: 'dukanah.admin.t-carts.com',
+        hostname: 'fashion.admin.t-carts.com',
         port: '',
         pathname: '/uploads/**', // يسمح بمسارات uploads
       },

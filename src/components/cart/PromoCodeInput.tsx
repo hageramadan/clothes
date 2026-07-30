@@ -12,12 +12,12 @@ interface PromoCodeInputProps {
 }
 
 // const API_URL = 'https://admin.souqkaber.com/api';
-const API_URL = 'https://dukanah.admin.t-carts.com/api';
+const API_URL = 'https://fashion.admin.t-carts.com/api';
 
 // دالة جلب التوكن
 const getToken = (): string | null => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem('auth_token2');
   }
   return null;
 };

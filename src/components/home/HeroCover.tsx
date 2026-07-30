@@ -60,7 +60,7 @@ useEffect(() => {
         const transformedSlides: Slide[] = slidersData.map(slider => ({
           id: slider.id,
           // Build full image URL
-          image: `https://dukanah.admin.t-carts.com${slider.image}`,
+          image: `https://fashion.admin.t-carts.com${slider.image}`,
           title: slider.name,
           description: slider.description,
           buttonText: "تسوق الآن",

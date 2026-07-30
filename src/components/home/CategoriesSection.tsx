@@ -64,7 +64,7 @@ useEffect(() => {
         const transformedCategories: Category[] = categoriesData.map(cat => ({
           id: cat.id,
           name: cat.name,
-          image: `https://dukanah.admin.t-carts.com${cat.image}`,
+          image: `https://fashion.admin.t-carts.com${cat.image}`,
           slug: generateSlug(cat.name)
         }));
         

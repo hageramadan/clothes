@@ -126,14 +126,14 @@ export default function AddAddress({
   const [isLoadingGovernorates, setIsLoadingGovernorates] = useState(true);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
 
-  const API_URL = "https://dukanah.admin.t-carts.com/api";
+  const API_URL = "https://fashion.admin.t-carts.com/api";
 
   // --- جلب المحافظات من الـ API ---
   useEffect(() => {
     const fetchGovernorates = async () => {
       setIsLoadingGovernorates(true);
       try {
-        const token = localStorage.getItem("auth_token");
+        const token = localStorage.getItem("auth_token2");
 
         const response = await fetch(`${API_URL}/governates`, {
           headers: {
@@ -178,7 +178,7 @@ export default function AddAddress({
 
       setIsLoadingCities(true);
       try {
-        const token = localStorage.getItem("auth_token");
+        const token = localStorage.getItem("auth_token2");
 
         const response = await fetch(`${API_URL}/governates/${formData.governorateId}/cities`, {
           headers: {
@@ -422,7 +422,7 @@ export default function AddAddress({
       };
 
 
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("auth_token2");
 
       let url = `${API_URL}/addresses`;
       let method = "POST";

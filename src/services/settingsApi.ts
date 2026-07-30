@@ -35,7 +35,7 @@ interface SettingsResponse {
 // دالة لجلب إعدادات الموقع
 export async function getSettings(): Promise<SettingsData> {
   try {
-    const response = await fetch(`https://dukanah.admin.t-carts.com/api/settings`, {
+    const response = await fetch(`https://fashion.admin.t-carts.com/api/settings`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

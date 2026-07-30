@@ -10,12 +10,12 @@ import Pagination from "@/components/products/Pagination";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-const API_URL = 'https://dukanah.admin.t-carts.com/api';
+const API_URL = 'https://fashion.admin.t-carts.com/api';
 
 // دالة جلب التوكن
 const getToken = (): string | null => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem('auth_token2');
   }
   return null;
 };
@@ -65,7 +65,7 @@ const transformProductForCard = (product: any) => {
   const cleanImageUrl = (url: string) => {
     if (!url) return '/placeholder-image.jpg';
     if (url.startsWith('/storage')) {
-      return `https://dukanah.admin.t-carts.com${url}`;
+      return `https://fashion.admin.t-carts.com${url}`;
     }
     return url;
   };

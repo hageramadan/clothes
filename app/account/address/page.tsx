@@ -14,13 +14,13 @@ export default function AddressPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_URL = 'https://dukanah.admin.t-carts.com/api';
+  const API_URL = 'https://fashion.admin.t-carts.com/api';
 
   // جلب جميع العناوين
   const fetchAddresses = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       
       const response = await fetch(`${API_URL}/addresses`, {
         headers: {
@@ -68,7 +68,7 @@ export default function AddressPage() {
 
   const handleDeleteAddress = async (id: number) => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       
       const response = await fetch(`${API_URL}/addresses/${id}/delete`, {
         method: 'DELETE',

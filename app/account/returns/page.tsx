@@ -11,11 +11,11 @@ import toast from "react-hot-toast";
 import Pagination from '@/components/products/Pagination';
 
 // ========== إعدادات API ==========
-const API_URL = 'https://dukanah.admin.t-carts.com/api';
+const API_URL = 'https://fashion.admin.t-carts.com/api';
 
 const getToken = (): string | null => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem('auth_token2');
   }
   return null;
 };
@@ -219,7 +219,7 @@ const fetchReturns = async (page: number = 1, perPage: number = 10): Promise<{ r
 const cleanImageUrl = (url: string): string => {
   if (!url) return "/images/placeholder-product.png";
   if (url.startsWith("/storage")) {
-    return `https://dukanah.admin.t-carts.com${url}`;
+    return `https://fashion.admin.t-carts.com${url}`;
   }
   return url;
 };

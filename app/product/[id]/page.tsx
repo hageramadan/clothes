@@ -28,7 +28,7 @@ const transformProductData = (apiProduct: ProductData) => {
   const cleanImageUrl = (url: string) => {
     if (!url) return "/images/placeholder.jpg";
     if (url.startsWith("/storage")) {
-      return `https://dukanah.admin.t-carts.com${url}`;
+      return `https://fashion.admin.t-carts.com${url}`;
     }
     return url;
   };

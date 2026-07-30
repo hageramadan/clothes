@@ -240,9 +240,9 @@ export default function ProductsContent() {
     const cleanImageUrl = (url: string) => {
       if (!url) return "/placeholder-image.jpg";
       if (url.startsWith("/storage")) {
-        return `https://dukanah.admin.t-carts.com${url}`;
+        return `https://fashion.admin.t-carts.com${url}`;
       }
-      return `https://dukanah.admin.t-carts.com/storage${url}`;
+      return `https://fashion.admin.t-carts.com/storage${url}`;
     };
 
     return {

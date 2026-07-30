@@ -82,9 +82,9 @@ const transformProduct = (product: ProductData): Product => {
   const cleanImageUrl = (url: string) => {
     if (!url) return "/images/placeholder.jpg";
     if (url.startsWith('/storage')) {
-      return `https://dukanah.admin.t-carts.com${url}`;
+      return `https://fashion.admin.t-carts.com${url}`;
     }
-    return `https://dukanah.admin.t-carts.com${url}`;
+    return `https://fashion.admin.t-carts.com${url}`;
   };
   
   const mainImage = product.images && product.images.length > 0 

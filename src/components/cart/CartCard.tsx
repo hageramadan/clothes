@@ -201,7 +201,7 @@ const ProductImageLarge = ({ id, image, name }: { id: number; image: string; nam
   const cleanImageUrl = (url: string) => {
     if (!url) return "/images/placeholder.jpg";
     if (url.startsWith("/storage")) {
-      return `https://dukanah.admin.t-carts.com${url}`;
+      return `https://fashion.admin.t-carts.com${url}`;
     }
     return url;
   };
@@ -369,7 +369,7 @@ const ProductImageMobile = ({ id, image, name }: { id: number; image: string; na
   const cleanImageUrl = (url: string) => {
     if (!url) return "/images/placeholder.jpg";
     if (url.startsWith("/storage")) {
-      return `https://dukanah.admin.t-carts.com${url}`;
+      return `https://fashion.admin.t-carts.com${url}`;
     }
     return url;
   };

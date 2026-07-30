@@ -34,7 +34,7 @@ export default function AccountPage() {
     
     try {
       // استرجاع التوكن من localStorage بنفس المفتاح
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("auth_token2");
 
       if (!token) {
         console.warn("لم يتم العثور على توكن المصادقة");
@@ -42,7 +42,7 @@ export default function AccountPage() {
         return;
       }
 
-      const apiUrl = "https://dukanah.admin.t-carts.com/api";
+      const apiUrl = "https://fashion.admin.t-carts.com/api";
       const response = await fetch(`${apiUrl}/wallet`, {
         method: "GET",
         headers: {

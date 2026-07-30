@@ -212,8 +212,8 @@ export default function CheckoutFailedContent() {
         <div className="mt-6 pt-6 border-t border-gray-200">
           <p className="text-xs text-center text-gray-400">
             إذا استمرت المشكلة، يرجى التواصل مع خدمة العملاء على{' '}
-            <a href="mailto:support@dukanah.com" className="text-[#EC221F] hover:underline">
-              support@dukanah.com
+            <a href="mailto:support@fashion.com" className="text-[#EC221F] hover:underline">
+              support@fashion.com
             </a>
           </p>
         </div>

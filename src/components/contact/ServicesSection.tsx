@@ -36,7 +36,7 @@ export default function ServicesSection() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch('https://dukanah.admin.t-carts.com/api/contact-cards'); // أو استخدم الـ URL الكامل
+        const response = await fetch('https://fashion.admin.t-carts.com/api/contact-cards'); // أو استخدم الـ URL الكامل
         // إذا كان الـ API خارجي:
         // const response = await fetch('{{url}}/contact-cards');
         

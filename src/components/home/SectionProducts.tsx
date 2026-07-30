@@ -90,9 +90,9 @@
 //   const cleanImageUrl = (url: string) => {
 //     if (!url) return "/images/placeholder.jpg";
 //     if (url.startsWith('/storage')) {
-//       return `https://dukanah.admin.t-carts.com${url}`;
+//       return `https://fashion.admin.t-carts.com${url}`;
 //     }
-//     return `https://dukanah.admin.t-carts.com${url}`;
+//     return `https://fashion.admin.t-carts.com${url}`;
 //   };
   
 //   const mainImage = product.images && product.images.length > 0 
@@ -172,7 +172,7 @@
 //         }
 //       } else if (showAllSections) {
 //         // جلب جميع الأقسام
-//         const response = await fetch('https://dukanah.admin.t-carts.com/api/sections', {
+//         const response = await fetch('https://fashion.admin.t-carts.com/api/sections', {
 //           method: 'GET',
 //           headers: {
 //             'Content-Type': 'application/json',
@@ -449,9 +449,9 @@ const transformProduct = (product: any): Product => {
   const cleanImageUrl = (url: string) => {
     if (!url) return "/images/placeholder.jpg";
     if (url.startsWith('/storage')) {
-      return `https://dukanah.admin.t-carts.com${url}`;
+      return `https://fashion.admin.t-carts.com${url}`;
     }
-    return `https://dukanah.admin.t-carts.com${url}`;
+    return `https://fashion.admin.t-carts.com${url}`;
   };
   
   const mainImage = product.images && product.images.length > 0 
@@ -557,7 +557,7 @@ export function SectionProducts({
         }
       } else if (showAllSections) {
         // جلب جميع الأقسام
-        const response = await fetch('https://dukanah.admin.t-carts.com/api/sections', {
+        const response = await fetch('https://fashion.admin.t-carts.com/api/sections', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

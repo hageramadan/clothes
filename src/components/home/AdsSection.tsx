@@ -260,7 +260,7 @@ export function AdsSection({ variant = 'dark', onLoad }: AdsSectionProps) {
   const imageUrl = currentAd?.image 
     ? (currentAd.image.startsWith('http') 
         ? currentAd.image 
-        : `https://dukanah.admin.t-carts.com${currentAd.image}`)
+        : `https://fashion.admin.t-carts.com${currentAd.image}`)
     : (variant === 'dark' ? '/images/sale.png' : '/images/sale1.png');
   
   // ✅ تنسيق التاريخ للعرض

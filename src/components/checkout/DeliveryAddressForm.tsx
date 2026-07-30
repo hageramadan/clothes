@@ -94,7 +94,7 @@ export default function DeliveryAddressForm({
   const isFetchingRef = useRef(false);
   const hasFetchedAddressesRef = useRef(false);
   
-  const API_URL = 'https://dukanah.admin.t-carts.com/api';
+  const API_URL = 'https://fashion.admin.t-carts.com/api';
 
   const getFieldValue = (value: string): string => {
     return value && value.trim() !== "" ? value.trim() : "";
@@ -112,7 +112,7 @@ export default function DeliveryAddressForm({
     
     setIsLoadingAddresses(true);
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       // ✅ إذا لم يوجد توكن، لا تجلب
       if (!token) {
         console.log("🟢 No auth token - skipping saved addresses fetch");
@@ -155,7 +155,7 @@ export default function DeliveryAddressForm({
     
     setIsLoadingGovernorates(true);
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       const response = await fetch(`${API_URL}/governates`, {
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ export default function DeliveryAddressForm({
 
     setIsLoadingCities(true);
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       const response = await fetch(`${API_URL}/governates/${governorateId}/cities`, {
         headers: {
           'Content-Type': 'application/json',
@@ -313,7 +313,7 @@ export default function DeliveryAddressForm({
         onCitySelected(cityId);
       }
       
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       const addressToSave = {
         city_id: cityId,
         street: getFieldValue(addressData.street),

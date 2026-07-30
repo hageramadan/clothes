@@ -117,11 +117,11 @@ interface PaginationData {
 }
 
 // ========== إعدادات API ==========
-const API_URL = "https://dukanah.admin.t-carts.com/api";
+const API_URL = "https://fashion.admin.t-carts.com/api";
 
 const getToken = (): string | null => {
   if (typeof window !== "undefined") {
-    return localStorage.getItem("auth_token");
+    return localStorage.getItem("auth_token2");
   }
   return null;
 };
@@ -167,7 +167,7 @@ const fetchOrders = async (page: number = 1, perPage: number = 10, signal?: Abor
 
     if (response.status === 401) {
       console.warn("⚠️ Unauthorized - token expired or invalid");
-      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_token2");
       return {
         orders: [],
         pagination: {
@@ -285,7 +285,7 @@ const formatDate = (dateString: string): string => {
 const cleanImageUrl = (url: string): string => {
   if (!url) return PLACEHOLDER_IMAGE;
   if (url.startsWith("/storage")) {
-    return `https://dukanah.admin.t-carts.com${url}`;
+    return `https://fashion.admin.t-carts.com${url}`;
   }
   return url;
 };

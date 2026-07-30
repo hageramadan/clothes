@@ -44,9 +44,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [itemCount, setItemCount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
   const [guestToken, setGuestTokenState] = useState<string | null>(() => {
-    // ✅ إذا كان هناك auth_token، لا نستخدم guest_token
+    // ✅ إذا كان هناك auth_token2، لا نستخدم guest_token
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       if (token) {
         return null;
       }
@@ -59,9 +59,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // ✅ التحقق إذا كان المستخدم ضيف
   const isGuest = useMemo(() => {
-    // إذا كان هناك auth_token، فالمستخدم ليس ضيف
+    // إذا كان هناك auth_token2، فالمستخدم ليس ضيف
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       if (token) {
         return false;
       }
@@ -73,9 +73,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // ✅ دالة لحفظ الـ guest_token
   const setGuestToken = useCallback((token: string) => {
-    // ✅ إذا كان هناك auth_token، لا نحفظ guest_token
+    // ✅ إذا كان هناك auth_token2، لا نحفظ guest_token
     if (typeof window !== 'undefined') {
-      const authToken = localStorage.getItem('auth_token');
+      const authToken = localStorage.getItem('auth_token2');
       if (authToken) {
         return;
       }
@@ -99,9 +99,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (response.result === true && response.data && response.data.cart) {
         const cartData = response.data.cart;
         
-        // ✅ حفظ الـ guest_token فقط إذا لم يكن هناك auth_token
+        // ✅ حفظ الـ guest_token فقط إذا لم يكن هناك auth_token2
         if (cartData.guest_token) {
-          const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+          const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token2') : null;
           if (!authToken) {
             setGuestToken(cartData.guest_token);
           }
@@ -137,9 +137,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setItemCount(newCart.total_quantity || 0);
       setTotalAmount(newCart.total_amount || 0);
       
-      // ✅ حفظ الـ guest_token فقط إذا لم يكن هناك auth_token
+      // ✅ حفظ الـ guest_token فقط إذا لم يكن هناك auth_token2
       if (newCart.guest_token) {
-        const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+        const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token2') : null;
         if (!authToken) {
           setGuestToken(newCart.guest_token);
         }
@@ -172,9 +172,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const response = await addToCart(payload);
       
       if (response.result === true && response.data) {
-        // ✅ حفظ الـ guest_token فقط إذا لم يكن هناك auth_token
+        // ✅ حفظ الـ guest_token فقط إذا لم يكن هناك auth_token2
         if (response.data.cart?.guest_token) {
-          const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+          const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token2') : null;
           if (!authToken) {
             setGuestToken(response.data.cart.guest_token);
           }

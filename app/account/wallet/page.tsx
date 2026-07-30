@@ -19,14 +19,14 @@ export default function WalletPage() {
 
     try {
       // 1. استرجاع التوكن من localStorage (أو من أي مكان آخر تخزنه فيه)
-      const token = localStorage.getItem("auth_token"); // غير "authToken" إلى الاسم الذي تستخدمه
+      const token = localStorage.getItem("auth_token2"); // غير "authToken" إلى الاسم الذي تستخدمه
 
       if (!token) {
         throw new Error("لم يتم العثور على توكن المصادقة. الرجاء تسجيل الدخول مرة أخرى.");
       }
 
       // 2. عنوان الـ API - استبدل YOUR_API_URL بالعنوان الحقيقي
-      const apiUrl ="https://dukanah.admin.t-carts.com/api";
+      const apiUrl ="https://fashion.admin.t-carts.com/api";
       const response = await fetch(`${apiUrl}/wallet`, {
         method: "GET",
         headers: {

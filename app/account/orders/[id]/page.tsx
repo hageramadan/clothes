@@ -111,11 +111,11 @@ interface OrderDetails {
 }
 
 // ========== إعدادات API ==========
-const API_URL = "https://dukanah.admin.t-carts.com/api";
+const API_URL = "https://fashion.admin.t-carts.com/api";
 
 const getToken = (): string | null => {
   if (typeof window !== "undefined") {
-    return localStorage.getItem("auth_token");
+    return localStorage.getItem("auth_token2");
   }
   return null;
 };
@@ -143,7 +143,7 @@ const fetchOrderDetails = async (
 
     if (response.status === 401) {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_token2");
         localStorage.removeItem("user_data");
       }
       throw new Error("UNAUTHORIZED");
@@ -188,7 +188,7 @@ const cancelOrder = async (orderId: number): Promise<boolean> => {
 
     if (response.status === 401) {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_token2");
         localStorage.removeItem("user_data");
       }
       toast.error("جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى", {
@@ -278,7 +278,7 @@ const formatDate = (dateString: string): string => {
 const cleanImageUrl = (url: string): string => {
   if (!url) return PLACEHOLDER_IMAGE;
   if (url.startsWith("/storage")) {
-    return `https://dukanah.admin.t-carts.com${url}`;
+    return `https://fashion.admin.t-carts.com${url}`;
   }
   return url;
 };
@@ -490,7 +490,7 @@ export default function OrderDetailsPage() {
       });
 
       if (response.status === 401) {
-        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_token2");
         localStorage.removeItem("user_data");
         toast.error("جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى", {
           duration: 3000,

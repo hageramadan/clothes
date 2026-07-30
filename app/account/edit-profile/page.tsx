@@ -55,7 +55,7 @@ export default function EditProfilePage() {
             confirmPassword: "",
           });
           if (result.data.user.image) {
-            setExistingAvatar(`https://dukanah.admin.t-carts.com${result.data.user.image}`);
+            setExistingAvatar(`https://fashion.admin.t-carts.com${result.data.user.image}`);
           } else {
             setExistingAvatar(null);
           }
@@ -69,7 +69,7 @@ export default function EditProfilePage() {
             confirmPassword: "",
           });
           if (user.image) {
-            setExistingAvatar(`https://dukanah.admin.t-carts.com${user.image}`);
+            setExistingAvatar(`https://fashion.admin.t-carts.com${user.image}`);
           } else {
             setExistingAvatar(null);
           }

@@ -92,7 +92,7 @@ const extractColorsFromVariants = (variants: ProductVariant[]): Array<{ color: s
 const cleanImageUrl = (url: string): string => {
   if (!url) return '/images/placeholder.jpg';
   if (url.startsWith('/storage')) {
-    return `https://dukanah.admin.t-carts.com${url}`;
+    return `https://fashion.admin.t-carts.com${url}`;
   }
   return url;
 };
@@ -166,11 +166,11 @@ export const transformFavoriteToProductCard = (favorite: FavoriteProduct | null 
 };
 
 // ===================== باقي الكود =====================
-const API_URL = 'https://dukanah.admin.t-carts.com/api';
+const API_URL = 'https://fashion.admin.t-carts.com/api';
 
 const getToken = (): string | null => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem('auth_token2');
   }
   return null;
 };
@@ -228,7 +228,7 @@ export const fetchFavorites = async (
       
       // ✅ إذا كان التوكن غير صالح (401)
       if (response.status === 401) {
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_token2');
         return {
           result: true,
           data: {

@@ -56,7 +56,7 @@ export default function ContactForm() {
       };
 
 
-      const response = await fetch("https://dukanah.admin.t-carts.com/api/contact-us", {
+      const response = await fetch("https://fashion.admin.t-carts.com/api/contact-us", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

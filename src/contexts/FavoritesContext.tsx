@@ -53,7 +53,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('auth_token2');
     if (!token) {
       console.log('🔴 No auth token found, skipping favorites fetch');
       if (isMountedRef.current) {
@@ -142,7 +142,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   // ✅ الاستماع لأحداث تسجيل الدخول مع منع التكرار
   useEffect(() => {
     const handleAuthChange = () => {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       if (token) {
         console.log('🔄 Auth changed, fetching favorites...');
         // ✅ تأخير صغير لتجنب التكرار
@@ -188,7 +188,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   // ✅ إعادة الجلب عند تغيير التوكن (مع منع التكرار)
   useEffect(() => {
     const handleStorageChange = () => {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token2');
       if (token) {
         // ✅ تأخير لتجنب التكرار
         setTimeout(() => {

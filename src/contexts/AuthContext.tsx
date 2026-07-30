@@ -245,7 +245,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // التحقق من OTP للبريد الإلكتروني
   const handleVerifyOTPWithEmail = useCallback(async (otp: string, email: string): Promise<{ success: boolean; message: string; token?: string }> => {
     try {
-      const response = await fetch("https://dukanah.admin.t-carts.com/api/auth/verify-otp", {
+      const response = await fetch("https://fashion.admin.t-carts.com/api/auth/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -286,7 +286,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // التحقق من OTP للهاتف
   const handleVerifyOTPWithPhone = useCallback(async (otp: string, phone: string): Promise<{ success: boolean; message: string; token?: string }> => {
     try {
-      const response = await fetch("https://dukanah.admin.t-carts.com/api/auth/verify-otp", {
+      const response = await fetch("https://fashion.admin.t-carts.com/api/auth/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -343,7 +343,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // إعادة إرسال OTP للهاتف
   const handleResendOTPToPhone = useCallback(async (phone: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await fetch("https://dukanah.admin.t-carts.com/api/auth/resend-otp", {
+      const response = await fetch("https://fashion.admin.t-carts.com/api/auth/resend-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
