@@ -231,7 +231,7 @@ export function Navbar() {
       <header className="fixed top-0 z-50 w-full bg-white shadow-md">
         <div className="container-custom">
           <div className="flex h-16 items-center justify-between">
-            <div className="text-[32px] font-bold text-[#EC221F]">Logo</div>
+            {/* <div className="text-[32px] font-bold text-[#EC221F]">Logo</div> */}
             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
           </div>
         </div>
@@ -245,14 +245,22 @@ export function Navbar() {
       style={{ backgroundColor: styles.backgroundColor }}
     >
       <div className="container-custom">
-        <div className="flex h-16 items-center justify-between gap-4">
+                  <div className="flex h-16 lg:h-20 items-center justify-between gap-4">
+
           {/* Logo */}
           <Link 
             href="/" 
             className="text-[32px] font-bold transition-colors shrink-0"
-            style={{ color: styles.logoColor }}
+            // style={{ color: styles.logoColor }}
           >
-            Logo
+             <Image
+                src="/logo.png"
+                alt="Logo"
+                width={1000}
+                height={700}
+                className="object-contain w-20 h-20 lg:w-32 lg:h-32"
+              />
+            {/* Logo */}
           </Link>
 
           {/* Desktop Navigation */}

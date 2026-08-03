@@ -34,15 +34,16 @@ export const LoadingScreen = () => {
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white">
       <div className="flex flex-col items-center space-y-8">
         {/* اللوجو */}
-        <div className="relative w-32 h-32 mx-auto">
-          {/* <Image
+               <div className="relative w-32 h-32 lg:w-48 lg:h-48 mx-auto">
+
+          <Image
             src="/logo.png" // ✅ غيري المسار حسب مكان اللوجو عندك
             alt="اللوجو"
             fill
             className="object-contain"
             priority
-          /> */}
-          <h1 className="text-[32px] lg:text-[64px] text-center font-bold transition-colors  text-[#EC221F]">logo</h1>
+          />
+          {/* <h1 className="text-[32px] lg:text-[64px] text-center font-bold transition-colors  text-[#EC221F]">logo</h1> */}
         </div>
 
         {/* مؤشر التحميل */}
